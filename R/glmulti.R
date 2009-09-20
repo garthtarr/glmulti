@@ -1,4 +1,5 @@
 # Main function glmulti (this is mostly a R front end for background Java classes in package glmulti).
+# version 0.5-2
 
 glmulti<-function(y, xr, data,  exclude=c(), intercept=TRUE, marginality=FALSE, level=2, filename="glmulti.output", method="h", crit="aicc", chunk=1, chunks=1, minsize=0, maxsize=-1, minK=0, maxK=-1,  plotty=TRUE, confsetsize=100, popsize=100, mutrate=10^-3,sexrate=0.1,imm=0.3, deltaM=0.05, deltaB=0.05, conseq=5, fitfunc=glm, resumefile = "id",  ...) {
 
@@ -97,7 +98,7 @@ for (i in 1:nc) flevs[i]<-as.integer(nlevels(data[,which(nana==xc[i+1])]))
 
 # informs it about the number of df consumed by the error distrib
 options(warn=-1)
-.jcall(molly,"V","supplyErrorDF",as.integer(attr(logLik(glm(as.formula(paste(y,"~1")),data=data, maxit=1, ...)),"df")-1))
+.jcall(molly,"V","supplyErrorDF",as.integer(attr(logLik(fitfunc(as.formula(paste(y,"~1")),data=data,...)),"df")-1))
 options(warn=0)
 }
 
@@ -175,12 +176,12 @@ while(.jcall(molly,"Z","nextModel")) {
 formula<-.jcall(molly,"S","getCurrModel")
 #if (!is.null(formula)) {
 curr<-curr+1
-beber<-glm(as.formula(formula),data=data, ...)
+beber<-fitfunc(as.formula(formula),data=data, ...)
 # convergence ?
 proceed=TRUE
 if (!beber$converged) {
 proceed<-FALSE
-write("!glm failed to converge: model skipped.",file="")
+write("!Fit function failed to converge: model skipped.",file="")
 write(paste("skipped:", formula),file="")
 }
 if(proceed) {
@@ -274,7 +275,7 @@ lesic = numeric(nbtofit)
 	if (nbtofit>0) for (m in 1:nbtofit) {
 	# fit models
 	formula=popul[m]
-	beber<-glm(as.formula(formula),data=data, ...)
+	beber<-fitfunc(as.formula(formula),data=data, ...)
 	liliac<- logLik(beber)
 	K<-attr(liliac,"df")
 	# convergence ?

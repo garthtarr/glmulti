@@ -88,15 +88,7 @@ Venables & Ripley (1997) Modern applied statistics with S-Plus. Springer.
 
 \examples{
 
-# For a range of examples see the article by Calcagno & de Mazancourt.
-# This simply returns the number of candidate models if one has 2 covariates and 2 factors of three levels each, considers pairwise interactions and does not apply marginality
-# First we make a dummy data frame
-dummyfactor=as.factor(c(rep("y",5),rep("yn",5),rep("n",10)))
-dummycovariate = 1:20
-dod = data.frame(2:21,dummyfactor,dummyfactor,dummycovariate,dummycovariate)
-# Then we call glmulti
-glmulti(names(dod)[1],names(dod)[-1], data=dod, method="d")
-# There are 250 models to compare
+#For examples see article by Calcagno & de Mazancourt.
 
 }
 
