@@ -1,5 +1,5 @@
 # Main function glmulti (this is mostly a R front end for background Java classes in package glmulti).
-# version 0.5-2
+# version 0.5-3
 
 glmulti<-function(y, xr, data,  exclude=c(), intercept=TRUE, marginality=FALSE, level=2, filename="glmulti.output", method="h", crit="aicc", chunk=1, chunks=1, minsize=0, maxsize=-1, minK=0, maxK=-1,  plotty=TRUE, confsetsize=100, popsize=100, mutrate=10^-3,sexrate=0.1,imm=0.3, deltaM=0.05, deltaB=0.05, conseq=5, fitfunc=glm, resumefile = "id",  ...) {
 
@@ -14,7 +14,7 @@ glmulti<-function(y, xr, data,  exclude=c(), intercept=TRUE, marginality=FALSE, 
 # maxsize: maximal number of TERMS to be included in candidate models (negative = no constraint)
 # minK: minimal complexity of candidate models (0 or negative = no constraint)
 # maxK: maximal complexity of candidate models (negative = no constraint)
-# method:  h for holistic screening, g for genetic algorithm, r to resume a GA simulation
+# method:  h for holistic screening, g for genetic algorithm, r to resume a GA simulation, v to print version info
 # confsetsize: how many models to keep in the confidence set of models
 # crit: the support criterion to use (aic, aicc or bic)
 # popsize: pop size for genetic algorithm
@@ -36,6 +36,12 @@ glmulti<-function(y, xr, data,  exclude=c(), intercept=TRUE, marginality=FALSE, 
 faic <- function(lk,k,n) {return(-2*lk+2*k)}
 faicc <- function(lk,k,n) {return(-2*lk + 2*k*n/max(n-k-1,0))}
 fbic <- function(lk,k,n) {return(-2*lk + k*log(n))}
+
+if (method=="v") {
+write("This is glmulti version 0.5-3. October 2009.",file="")
+return("0.5-3")
+}
+
 
 
 # some general constants
@@ -122,7 +128,7 @@ write(paste("Size constraints: min = ",minsize,"max =",maxsize),file="")
 write(paste("Complexity constraints: min = ",minK,"max =",maxK),file="")
 if (marginality) write("Marginality rule.",file="")
 nbcand = .jcall(molly,"I","diagnose")
-if (nbcand==-1) write("Your candidate set contains more than 1 billion models.",file="")
+if (nbcand==-1) write("Your candidate set contains more than 1 billion (1e9) models.",file="")
 else write(paste("Your candidate set contains",nbcand,"models."),file="")
 
 return(nbcand)
@@ -138,6 +144,7 @@ return(nbcand)
 if (method=="h") {
 # go for holistic screening !
 # ----------------------------
+write("\nTASK: Exhaustive screening of candidate set.",file="")
 # On initialise le fichier d'output...
 write("\nINFO: Preparing output file...",file="")
 if (chunks>1) {
