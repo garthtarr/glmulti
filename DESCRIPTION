@@ -1,5 +1,5 @@
 Package: glmulti
-Version: 0.6-1
+Version: 0.6-2
 Date: 2009-11-25
 Title: GLM model selection and multimodel inference made easy
 Author: Vincent Calcagno <vincent.calcagno@mcgill.ca>
@@ -17,6 +17,6 @@ Description: Automated model selection for GLMs. Provides a wrapper for
         exhaustive screening of the candidates is not feasible.
 License: GPL (>= 2)
 URL: http://redpath-staff.mcgill.ca/calcagno/stats.html
-Packaged: Mon Nov 30 22:29:47 2009; cvince
+Packaged: Tue Dec 1 17:19:44 2009; cvince
 Repository: CRAN
-Date/Publication: 2009-12-01 15:39:38
+Date/Publication: 2009-12-02 07:58:49

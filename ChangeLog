@@ -1,7 +1,7 @@
 glmulti package changelog:
 
 Version: 0.5-3 (2009-09-15)
-Fixed: 
+Fixed: some issues in the coding of models
 
 Version: 0.6-1 (2009-11-25)
 fixed: some issues when using marginality and several covariate:covariate interactions.
@@ -11,3 +11,9 @@ Additional functions are provided to help representation of the results, model-a
 and parallel computating (plot.glmulti, print.glmulti, summary.glmulti, coef.glmulti, predict.glmulti, consensus).
 QAIC and QAICc are now builtin.
 The genetic algorithm is now much faster.  
+
+Version: 0.6-2 (2009-12-1)
+fixed: bug when using plot.glmulti with type="s"
+fixed: startup of the java VM
+fixed: minor bug when using method="r"
+

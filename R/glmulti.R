@@ -133,19 +133,25 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", ...)
 	# construct list of coefficients
 	coke=lapply(coffee,getfit)
 	namou=unique(unlist(lapply(coke,function(x) dimnames(x)[[1]])))
+
 	coconutM=matrix(0,length(formo),length(namou))
 	coconutSE=matrix(0,length(formo),length(namou))
 	coconutN = numeric(length(namou))
 	# get values, deviations, presence for all models
 	gettou=function(i) {
-	ele=coke[[i]]
+		ele=coke[[i]]
 		nana = dimnames(ele)[[1]]
 		mimi=numeric(3*length(namou))
-		for (k in 1:length(nana)) {
-			mimi[match(nana[k],namou)]=ele[k,1]
-			mimi[match(nana[k],namou)+length(namou)]=ele[k,2]
-			mimi[match(nana[k],namou)+2*length(namou)]=1
-
+		if (length(nana) >1) {
+			for (k in 1:(length(nana))) {
+				mimi[match(nana[k],namou)]=ele[k,1]
+				mimi[match(nana[k],namou)+length(namou)]=ele[k,2]
+				mimi[match(nana[k],namou)+2*length(namou)]=1
+			}
+		} else {
+			mimi[match(nana[1],namou)]=ele[1]
+			mimi[match(nana[1],namou)+length(namou)]=ele[2]
+			mimi[match(nana[1],namou)+2*length(namou)]=1
 		}
 		return(mimi)
 	}
@@ -223,7 +229,8 @@ predict.glmulti <- function(object, select="all", ...)
 		preds = c(preds,list(predict(coffee[[i]])))
 	}
 	nbpo = length(preds[[1]])
-	all = matrix(unlist(preds), nc=nbpo, dimnames=list(c(), names(preds[[1]]) ))
+	all = t(matrix(unlist(preds), nr=nbpo))
+	dimnames(all)=list(c(), names(preds[[1]]) )
 	# handle NA values
 	nana = lapply(preds, is.na)
 	nbok = numeric(nbpo)
@@ -231,8 +238,8 @@ predict.glmulti <- function(object, select="all", ...)
 		nbok = nbok + nana[[i]]
 		preds[[i]][is.na(preds[[i]])] = 0
 		}
-	minou = matrix(waou%*%t(matrix(unlist(preds),nc=nbpo)), dimnames=list(names(preds[[1]]), c() )) 
-	vava = matrix(waou%*%t(matrix((unlist(preds)-unlist(rep(minou[1,],length(preds))))^2, nc=nbpo)),dimnames=list(names(preds[[1]]), c() ))
+	minou = matrix(waou%*%t(matrix(unlist(preds),nr=nbpo)), dimnames=list(names(preds[[1]]),c() )) 
+	vava = matrix(waou%*%t(matrix((unlist(preds)-unlist(rep(minou[1,],length(preds))))^2, nr=nbpo)),dimnames=list(names(preds[[1]]),c()))
 	list(averages = minou, variances = vava, all = all, omittedNA = nbok)
 	
 }
