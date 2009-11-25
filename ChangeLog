@@ -1,0 +1,13 @@
+glmulti package changelog:
+
+Version: 0.5-3 (2009-09-15)
+Fixed: 
+
+Version: 0.6-1 (2009-11-25)
+fixed: some issues when using marginality and several covariate:covariate interactions.
+glmulti now uses a S4 class ans S4 methods. It returns an object instead of writing a file.
+Formulas are accepted to specify the candidate set of models.
+Additional functions are provided to help representation of the results, model-averaging 
+and parallel computating (plot.glmulti, print.glmulti, summary.glmulti, coef.glmulti, predict.glmulti, consensus).
+QAIC and QAICc are now builtin.
+The genetic algorithm is now much faster.  

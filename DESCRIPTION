@@ -1,10 +1,10 @@
 Package: glmulti
-Version: 0.5-3
-Date: 2009-10-20
+Version: 0.6-1
+Date: 2009-11-25
 Title: GLM model selection and multimodel inference made easy
 Author: Vincent Calcagno <vincent.calcagno@mcgill.ca>
 Maintainer: Vincent Calcagno <vincent.calcagno@mcgill.ca>
-Depends: R (>= 2.5.0), rJava (>= 0.5-0)
+Depends: R (>= 2.5.0), rJava (>= 0.5-0), methods
 SystemRequirements: Java (>= 5.0)
 Suggests: MASS
 Description: Automated model selection for GLMs. Provides a wrapper for
@@ -17,6 +17,6 @@ Description: Automated model selection for GLMs. Provides a wrapper for
         exhaustive screening of the candidates is not feasible.
 License: GPL (>= 2)
 URL: http://redpath-staff.mcgill.ca/calcagno/stats.html
-Packaged: 2009-10-20 17:42:33 UTC; cvince
+Packaged: Mon Nov 30 22:29:47 2009; cvince
 Repository: CRAN
-Date/Publication: 2009-10-20 19:31:08
+Date/Publication: 2009-12-01 15:39:38

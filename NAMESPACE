@@ -1,2 +1,15 @@
-import("rJava")
-export("glmulti")
+import(rJava)
+export(
+glmulti, plot.glmulti, print.glmulti, summary.glmulti, coef.glmulti, predict.glmulti, 
+consensus, getfit, aic, aicc, bic, qaic, qaicc, write
+)
+
+exportClasses("glmulti")
+exportMethods("write", "consensus", "getfit", "aic", "aicc", "qaic", "qaicc", "bic")
+
+
+S3method(print, glmulti)
+S3method(summary,glmulti)
+S3method(coef,glmulti)
+S3method(predict,glmulti)
+S3method(plot,glmulti)

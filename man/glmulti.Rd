@@ -1,98 +1,106 @@
 \name{glmulti}
-\alias{glmulti}
-%- Also NEED an '\alias' for EACH other topic documented here.
-\title{ GLM model selection and multimodel inference made easy}
-\description{
-  This is the main function of package glmulti. Use it instead of glm to automatically compare all possible models.
-  Simply indicate the name of your response variable, and the candidate explanatory variables.
-  This wrapper for glm() will automatically generate all possible models (under some constraints set by you) and find the best models in terms of some Information Criterion (AIC, AICc or BIC).
-  It can handle very large numbers of candidate models, and for this reason	can use a Genetic Algorithm to find the best models when an exhaustive screening of the candidates is not feasible.
-}
-\usage{
-glmulti(y, xr, data,  exclude=c(), intercept=TRUE, marginality=FALSE, level=2, filename="glmulti.output", method="h", crit="aicc", chunk=1, chunks=1, minsize=0, maxsize=-1, minK=0, maxK=-1,  plotty=TRUE, confsetsize=100, popsize=100, mutrate=10^-3,sexrate=0.1,imm=0.3, deltaM=0.05, deltaB=0.05, conseq=5, fitfunc=glm, resumefile = "id",  ...)
-}
-%- maybe also 'usage' for other objects documented here.
 
+\alias{glmulti}
+
+\title{ Automated model selection and multimodel inference with (G)LMs}
+\description{
+\code{glmulti} finds what are the \code{n} best models (the confidence set of models) among all possible models (the candidate set, as specified by the user).
+Models are fitted with the specified fitting function (default is \code{glm}) and are ranked with the specified Information Criterion (default is \code{aicc}).
+The best models are found either through an exhaustive screening of the candidates or using a genetic algorithm, which allows very large candidate sets to be adressed.
+The output can be used for model selection, variable selection, and multimodel inference.
+}
+
+\usage{
+#  glmulti S4 generic 
+glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE, marginality = FALSE, chunk = 1, chunks = 1,
+		level = 2, minsize = 0, maxsize = -1, minK = 0, maxK = -1, method = "h", crit = "aicc", confsetsize = 100, popsize = 100, mutrate = 10^-3, sexrate = 0.1, imm = 0.3, plotty = TRUE, report = TRUE, deltaM = 0.05, deltaB = 0.05, conseq = 5, fitfunction = "glm", resumefile = "id", ...)
+
+
+}
 
 \arguments{
-  \item{y}{The name of your dependent variable, as used in your data frame. E.g. "MyResponse" }
-  \item{xr}{A vector of the names of your explanatory variables (factors and/or covariates). E.g. c("Age","Height","Sex")}
-  \item{data}{ A data frame containing your data (observations as rows, variables as (named) columns. }
-  \item{exclude}{This sets a constraint on candidate models. A vector of some terms (main effects and/or interactions) that should be excluded from the candidate models. Use ":" for interactions. E.g. c("Age:Sex","Height:Age") }
-  \item{intercept}{Whether to include an intercept in the formulas or not. Default is TRUE, so all formulas will start with "~1"}
-  \item{marginality}{Whether to use the general marginality rule or not. Default is FALSE. With TRUE, all predictors found in interaction terms are also included as main effects.}
-  \item{level}{The level of interaction between explanatory variables to be considered. Currently only 1 (only main effects) or 2 (main effects plus all pairwise interactions) are supported.}
-  \item{filename}{ A file name to be used when exporting the results. Extension ".txt" will be automatically appended. }
-  \item{method}{What the function should do: "d" for a simple report of the number of candidate models, "h" for exhaustive screening of the candidates, "g" for a genetic algorithm search, "r" to resume a previous GA simulation.}
-  \item{crit}{The Information Criterion to be used ("aic", "aicc" or "bic")}
-
-  \item{chunk}{When splitting an exhaustive screening ("h") approach, this indicates which part (on the \code{chunks} parts) this program should do.}
-  \item{chunks}{When splitting an exhaustive screening ("h") approach, this indicates the total number of parts (i.e. into how many pieces the job has been splitted.)}
-
+  \item{y}{ A formula, character string, or fitted model (of class lm or glm)
+	specifying the response variable and the terms (main effects and/or interactions) to be used in the candidate models (e.g. height~age*sex+mass).
+	Alternatively, a character string naming the variable to be used as response (e.g. "height")
+	(in which case the names of the predictors must be passed through the xr argument)
+	
+  }
+  \item{xr}{An optional character array specifying the variables (categorical or quantitative) to be used as predictors, e.g. c("age", "height" , "mass")}
+  \item{exclude}{Optional character vector naming terms (main effects or interactions) to be excluded from the candidate models, e.g. c("mass:height")}
+  \item{intercept}{ Whether to include an intercept in the candidate models or not. }
+  \item{level}{ If 1, only main effects (terms of order 1) are used to build the candidate set. 
+		If 2, pairwise interactions are also used (higher order interactions are currently ignored)}
+  
+  \item{data}{A data.frame containing the data. If not specified, \code{glmulti} will try to find the data in the environment of the formula, 
+	from the fitted model passed as y argument, or from the global environment.}
+   
+  \item{name}{ The name of this \code{glmulti} analysis. Optional.}
+  
+  \item{marginality}{ Whether to apply the marginality rule or not. If TRUE, only marginal models will be considered.}
   \item{minsize}{This sets a constraint on candidate models. Minimal number of TERMS (main effects or interactions) to be included in candidate models (negative = no constraint)}
   \item{maxsize}{This sets a constraint on candidate models. Maximal number of TERMS to be included in candidate models (negative = no constraint)}
-  \item{minK}{This sets a constraint on candidate models. Minimal complexity of candidate models (negative = no constraint)}
-  \item{maxK}{This sets a constraint on candidate models. Maximal complexity of candidate models (negative = no constraint)}
-  
-  \item{plotty}{whether to plot the progress of the IC profile when running. Default is TRUE.}
-  \item{confsetsize}{ How many models should be returned in the confidence set of models?} 
-  
-  \item{popsize}{The population size for the genetic algorithm}
-  \item{mutrate}{The per locus mutation rate for genetic algorithm, between 0 and 1.}
-  \item{sexrate}{The rate of sexual reproduction for the genetic algorithm, between 0 and 1. }
-  \item{imm}{The rate of immigration for the genetic algorithm, between 0 and 1.}
-  
-  \item{deltaM}{The target change in mean IC (defines the stop rules for the GA)}
-  \item{deltaB}{The target change in best IC (defines the stop rules for the GA)}
-  \item{conseq}{The target successive number of times with no improvement (i.e. target changes have been attained) (defines the stop rule for the GA). The greater it is, the more stringent the stop rule. }
-  
-  \item{fitfunc}{The fitting function to bee used. Default is glm of course, but you can provide any custom function that matches the parameters/returned values of glm. }
-  
-  \item{resumefile}{The name of files (without extension) from which to restore the java objects, when using method "r". Default: taken to be filename.}
+  \item{minK}{ This sets a constraint on candidate models. Minimal complexity of candidate models (negative = no constraint)}
+  \item{maxK}{ This sets a constraint on candidate models. Maximal complexity of candidate models (negative = no constraint)}
     
-  \item{\dots}{Further options to be passed to the fitting function. E.g. \code{maxit=50} or \code{family=binomial} }
+  \item{method}{ The method to be used to explore the candidate set of models. If "h" an exhaustive screening is undertaken. If "g" the genetic algorithm is employed (recommended for large candidate sets).
+			If "d", a simple summary of the candidate set is printed, including the number of candidate models.}
+  \item{crit}{The Information Criterion to be used. This should be a function that accepts a fitted model as first argument. Default is the small-sampled corrected Akaike IC (aicc).
+	Other provided functions are the Bayes IC (\code{bic}), the original AIC (\code{aic}) and QAIC/QAICc (\code{qaic} and \code{qaicc}).}
+  \item{fitfunction}{ The fitting function to be used. Any function similar to glm can be used}
+  \item{confsetsize}{ The number of models to be looked for, i.e. the size of the returned confidence set. }
+	
+  \item{plotty}{ Whether to plot the progress of the IC profile when running.}
+  \item{report}{ Whether to report about the progress at run time.} 
+ 
+  \item{chunk}{When using an exhaustive screening approach, it can be splitted in several parts to take advantage of multiple CPUs. 
+	chunk is an integer specifying which part the current call should perform.}
+  \item{chunks}{When splitting an exhaustive screening, the total number of parts the task should be divided into.
+		For example, with a quad-core processor, 4 may be useful. Use consensus to bring back the pieces into a single object.}
+
+  \item{popsize}{The population size for the genetic algorithm }
+  \item{mutrate}{ The per locus (i.e. per term) mutation rate for genetic algorithm, between 0 and 1}
+  \item{sexrate}{ The rate of sexual reproduction for the genetic algorithm, between 0 and 1}
+  \item{imm}{ The rate of immigration for the genetic algorithm, between 0 and 1}
+  \item{deltaM}{The target change in mean IC (defines the stop rules for the genetic algorithm)}
+  \item{deltaB}{ The target change in best IC (defines the stop rules for the genetic algorithm) }
+  \item{conseq}{ The target successive number of times with no improvement (i.e. target changes have been attained) (defines the stop rule for the GA). The greater it is, the more stringent the stop rule. }
+  \item{resumefile}{ When resuming an analysis (method="r"), the name of the files from which to resume. Default uses the same as name}
+  \item{\dots}{ Further arguments to be passed to the fitting function.  E.g. maxit=50 or family=binomial }
+
+
 }
-
-
 \details{
-A thorough description of this method and package can be found in Calcagno & de Mazancourt.
-As the function step in package MASS, glmulti aims at helping and making automatic the selection of best GLM models, using Information Criteria such as AIC.
-Contrary to step, it is not iterative (all models are compared), and is fully automatic (no intervention of the user is required).
-It is primarily intended to be used for exploratory analyses with many candidate explanatory variables (say 10 to 20). Calculations will typically be rather long (from one night to three days), but once the calculation is finished you will have a complete picture of the fit of models to your data.
-This function uses background java classes contained in the archive glmulti.jar.
-Running the function therefore requires a Java Running Environment, and the R package rJava.
-The fitting of models is performed by R though, using glm(), or any similar function you may have provided using argument \code{fitfunc}.
+  \code{glmulti} is defined as a S4 function. It acts as a frontend that calls background compiled functions (contained if archive glmulti.jar).
+  Running the function therefore requires a Java Running Environment, and package \code{rJava}.
+  A thorough description of this function and package can be found in the article by Calcagno and de Mazancourt.
+  \code{print.glmulti} and \code{summary.glmulti} are S3 methods which provide a synthesis of \code{glmulti} analyses.
+  
 }
-
-
 \value{
- Typically nothing is returned and the results are written in a file (named after \code{filename}). This text file is a data frame (tab separated), that can be read with R, OpenOffice Calc, MS Excel or any similar software. Lines are the models in the candidate set, and columns are properties of these models, most iportantly their GLM formula, their Information Criterion, and their complexity (number of parameters estimated from the data).
- From this file, lots of analyses can be performed without fitting any additional model (e.g. model averaging).
- When using \code{method="d"}, returns the number of models in the candidate set (see Examples). 
- When running a GA, two tiny java files (serialized objects) are also written to the disk at regular intervals. They can be used to resume the calculation (\code{method="r"}) if it was interrupted for any reason. This can also be used to continue a GA with modified parameters (e.g. mutation rate).
- }
+ An object of class \code{glmulti} is returned. It is a S4 object with several slots containing all the relevant data for model selection and beyond.
  
+Several standard S3 functions are provided to help access the content of this object.
  
-\references{
-Burnham & Anderson (2002) Model Selection and Multimodel Inference: an information theoretic approach. Springer.
-Calcagno & de Mazancourt (in prep) glmulti: a R package for easy and automatic model selection with Generalized Linear models
-Venables & Ripley (1997) Modern applied statistics with S-Plus. Springer.
+Several \code{glmulti} objects can be shrunk to one using the function consensus. This is useful to get the best of several replicates (of the genetic algorithm) or to bring together the different parts of a splitted exhaustive screening.
+When running a genetic algorithm, two tiny \code{java} files (serialized objects) are also written to the disk at regular intervals. They can be used to resume the calculation (method="r") if it was interrupted for any reason. This can also be used to continue a GA with modified parameters (e.g. mutation rate).
+
+
 }
+\references{ 
+Buckam (1997) Model Selection: an Integral Part of Inference. Biometrics 10:41
+Burnham & Anderson (2002) Model Selection and Multimodel Inference: an Information Theoretic Approach
+Calcagno & de Mazancourt in revision
+}
+\author{Vincent Calcagno, McGill University, Canada }
+\note{ }
 
 
-\author{Vincent Calcagno, McGill University, Montreal}
-
-\note{}
-
-\seealso{  \code{\link{step}} and \code{\link{stepAIC}} in package MASS }
-
+\seealso{ \code{\link{consensus}}, \code{\link{aic}}, \code{\link{summary.glmulti}}, \code{\link{coef.glmulti}}, \code{\link{step}}}
 \examples{
 
-#For examples see article by Calcagno & de Mazancourt.
-
 }
-
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
-\keyword{htest}
-\keyword{models}
+\keyword{models }
+\keyword{regression }
+
