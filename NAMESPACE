@@ -1,11 +1,11 @@
 import(rJava)
 export(
 glmulti, plot.glmulti, print.glmulti, summary.glmulti, coef.glmulti, predict.glmulti, 
-consensus, getfit, aic, aicc, bic, qaic, qaicc, write
+consensus, getfit, aic, aicc, bic, qaic, qaicc, write, weightable
 )
 
 exportClasses("glmulti")
-exportMethods("write", "consensus", "getfit", "aic", "aicc", "qaic", "qaicc", "bic")
+exportMethods("write", "consensus", "getfit", "aic", "aicc", "qaic", "qaicc", "bic","weightable")
 
 
 S3method(print, glmulti)

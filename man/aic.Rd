@@ -30,17 +30,15 @@ qaicc(object, ...)
 \value{
  The IC value of the model.
 }
-\references{  }
+
 \author{Vincent Calcagno, McGill University}
-\note{ 
-}
+
 \seealso{ 
 
 \code{\link{glmulti}}
 
 }
-\examples{
-}
+
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{models }

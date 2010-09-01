@@ -12,17 +12,19 @@ from the multiple models in the confidence set (or a subset of them). This allow
 coef.glmulti(object, select="all", varweighting="Buckland", ...)
 
 # S3 predict method for class 'glmulti'
-predict.glmulti(object, select="all", ...)
+predict.glmulti(object, select="all", newdata=NA, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-	\item{object}{an object of calss \code{glmulti}}
+	\item{object}{an object of class \code{glmulti}}
 	
 	\item{select}{A specification of which models should be used for inference. By default all models are used, see below. }
 	
 	\item{varweighting}{The method to be used to compute the unconditional variance. "Buckland" implements the approach presented in Buckland et al. 1997. "Johnson" implements a slightly different approach
 	 suggested in Johnson \& Omland 2004. The latter results in slightly smaller estimates of the unconditional variance of model coefficients.}
-
+	
+	\item{newdata}{New data for which to predict values}
+	
    \item{\dots}{ Further arguments.}
 }
 \details{
@@ -47,15 +49,13 @@ Buckland et al. 1997. Model selection: an integral part of inference. Biometrics
 Johnson \& Omland. 2004. Model selection in ecology and evolution. TREE.
  }
 \author{Vincent Calcagno, McGill University}
-\note{ 
-}
+
 \seealso{ 
 
 \code{\link{glmulti}}
 
 }
-\examples{
-}
+
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{models }

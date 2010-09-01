@@ -2,6 +2,7 @@
 \docType{methods}
 \alias{aic-methods}
 \alias{aic,lm-method}
+\alias{aic,negbin-method}
 \title{Methods for Function aic }
 \description{
  Used to compute the AIC value for several classes of models.

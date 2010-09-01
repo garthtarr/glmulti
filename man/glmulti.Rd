@@ -89,16 +89,14 @@ When running a genetic algorithm, two tiny \code{java} files (serialized objects
 \references{ 
 Buckam (1997) Model Selection: an Integral Part of Inference. Biometrics 10:41
 Burnham & Anderson (2002) Model Selection and Multimodel Inference: an Information Theoretic Approach
-Calcagno & de Mazancourt in revision
+Calcagno \& de Mazancourt 2010 J. Stat. Soft. v34 i12. See http://www.jstatsoft.org/v34/i12
+
 }
 \author{Vincent Calcagno, McGill University, Canada }
-\note{ }
 
 
 \seealso{ \code{\link{consensus}}, \code{\link{aic}}, \code{\link{summary.glmulti}}, \code{\link{coef.glmulti}}, \code{\link{step}}}
-\examples{
 
-}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{models }

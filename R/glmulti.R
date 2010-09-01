@@ -121,7 +121,8 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", ...)
 	# fit selected models
 	coffee=list()
 	for (i in formo) {
-		cak=as.call(list(substitute(match.fun(object@params$fitfunction)), formula=i, data=object@call$data))
+		ff=object@params$fitfunction
+		cak=as.call(list(substitute(match.fun(ff)), formula=i, data=object@call$data))
 		if (length(object@adi)>1)
 			for (j in 1:length(object@adi)) {
 				cak[[length(names(cak))+1]] = object@adi[[j]]
@@ -188,7 +189,7 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", ...)
 
 
 # model averaged prediction
-predict.glmulti <- function(object, select="all", ...) 
+predict.glmulti <- function(object, select="all", newdata=NA, ...) 
 {
 	ww = exp(-(object@crits - object@crits[1])/2)
 	ww=ww/sum(ww)
@@ -213,7 +214,8 @@ predict.glmulti <- function(object, select="all", ...)
 	# fit selected models
 	coffee=list()
 	for (i in formo) {
-		cak=as.call(list(substitute(match.fun(object@params$fitfunction)), formula=i, data=object@call$data))
+		ff=object@params$fitfunction
+		cak=as.call(list(substitute(match.fun(ff)), formula=i, data=object@call$data))
 		if (length(object@adi)>1)
 			for (j in 1:length(object@adi)) {
 				cak[[length(names(cak))+1]] = object@adi[[j]]
@@ -226,7 +228,11 @@ predict.glmulti <- function(object, select="all", ...)
 	# make predictions
 	preds=list()
 	for (i in 1:length(formo)) {
-		preds = c(preds,list(predict(coffee[[i]])))
+		if(is.na(newdata[1]))	{
+        			preds = c(preds, list(predict(coffee[[i]])))
+        		} else {
+       			 preds = c(preds, list(predict(coffee[[i]], newdata=newdata)))
+		}
 	}
 	nbpo = length(preds[[1]])
 	all = t(matrix(unlist(preds), nr=nbpo))
@@ -283,6 +289,12 @@ setMethod("getfit","lm", function(object, ...)
 {
 	return(summary(object)$coefficients[,1:2])
 })
+
+setMethod("getfit","negbin", function(object, ...)
+{
+	return(summary(object)$coefficients[,1:2])
+})
+
 
 # consensus method
 setGeneric("consensus", function (xs, confsetsize=NA, ...)  standardGeneric("consensus"))
@@ -376,16 +388,71 @@ setMethod("qaicc", "lm",  function(object, ...)
  	return(liliac / glmultiqaiccvalue + 2*k*n/max(n-k-1,0))
 
 })
+# support for negative binomial models
+setMethod("aicc", "negbin", function(object, ...)
+{
+	liliac<- logLik(object)
+	k<-attr(liliac,"df")
+	n= length(resid(object))
+	return(-2*logLik(object) + 2*k*n/max(n-k-1,0))
+})
+
+setMethod("bic", signature(object="negbin"), function(object, ...)
+{
+	liliac<- logLik(object)
+	k<-attr(liliac,"df")
+	n= length(resid(object))
+	return(-2*logLik(object) + k*log(n))
+})
+
+setMethod("aic", "negbin",  function(object, ...)
+{
+	liliac<- logLik(object)
+	k<-attr(liliac,"df")
+	return(-2*logLik(object)+2*k)
+})
+setMethod("qaic", "negbin",  function(object, ...)
+{
+	liliac<- logLik(object)
+	k<-attr(liliac,"df")
+ 	return(liliac / glmultiqaiccvalue + 2 * k)
+
+})
+
+setMethod("qaicc", "negbin",  function(object, ...)
+{
+	liliac<- logLik(object)
+	k<-attr(liliac,"df")
+	n= length(resid(object))
+ 	return(liliac / glmultiqaiccvalue + 2*k*n/max(n-k-1,0))
+
+})
+
+
+
+# printing a quick table of IC weights
+# kudos to J. Byrnes
+setGeneric("weightable", function(object, ...) standardGeneric("weightable"))
+setMethod("weightable", "glmulti",  function(object, ...)
+{
+	#get the summary
+	obj_summary<-summary(object)
+	#get the functions for output
+	funcs<-as.character(object@formulas)
+	ret<-data.frame(model=funcs, ic=obj_summary$icvalues,	weights=obj_summary$modelweights)
+	#a little renaming
+	names(ret)[which(names(ret)=="ic")]<-obj_summary$crit
+	return(ret)
+})
 
 	
 # interfaces for formulas/models: calls with missing xr argument
-
 setMethod("glmulti","missing",
 function(y, xr, data, exclude, name, intercept, marginality ,chunk, chunks, 
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
 		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,  ...) 
 {
-	write("This is glmulti 0.6-1, november 2009.",file="")
+	write("This is glmulti 0.6-3, september 2010.",file="")
 })
 
 setMethod("glmulti",

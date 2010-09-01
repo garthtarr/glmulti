@@ -2,6 +2,7 @@
 \docType{methods}
 \alias{aicc-methods}
 \alias{aicc,lm-method}
+\alias{aicc,negbin-method}
 \title{  Methods for Function aicc}
 \description{
  Used to compute the AICc value for several classes of models.
@@ -10,6 +11,7 @@
 \describe{
 
 \item{object = "lm"}{ Method for \code{glm} and \code{lm} }
+\item{object = "negbin"}{ Method for \code{glm.nb} }
 }}
 \keyword{methods}
 

@@ -25,17 +25,16 @@ consensus(xs, confsetsize = NA, ...)
 \value{
  A standard object of class \code{glmulti}
 }
-\references{  }
+\references{Calcagno \& de Mazancourt 2010 J. Stat. Soft. v34 i12. See http://www.jstatsoft.org/v34/i12}
+
 \author{Vincent Calcagno, McGill University}
-\note{ 
-}
+
 \seealso{ 
 
 \code{\link{glmulti}}
 
 }
-\examples{
-}
+
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{models }

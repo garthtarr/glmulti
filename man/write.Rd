@@ -27,13 +27,11 @@ write(x, file = "data", ncolumns = if (is.character(x)) 1 else 5, append = FALSE
   indicate whether the different terms are found in the formula of each model (0/1). The next columns contain model complexity (K), model IC, and model formula (as a character string).
 
 }
-\references{ }
+
 \author{Vincent Calcagno, McGill University }
-\note{
-}
+
 \seealso{  \code{\link{glmulti}}, \code{\link{consensus}} }
-\examples{
-}
+
 \keyword{IO}
 
 

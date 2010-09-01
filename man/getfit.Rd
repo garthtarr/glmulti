@@ -11,7 +11,7 @@ getfit(object, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{object}{A fitted model object, of class \code{glm} or \code{lm}}
+  \item{object}{A fitted model object, of class \code{glm}, \code{lm} or code{glm.nb}}
   
   \item{\dots}{ Further arguments that may be required by some methods of this generic.}
 }
@@ -23,10 +23,8 @@ getfit(object, ...)
   and two columns: the first with the estimated coefficients, the second with the associated standard errors.
  
 }
-\references{ }
+\references{Calcagno \& de Mazancourt 2010 J. Stat. Soft. v34 i12. See http://www.jstatsoft.org/v34/i12}
+
 \author{ Vincent Calcagno, McGill University}
-\note{ 
-}
+
 \seealso{ \code{\link{glmulti}}}
-\examples{
-}

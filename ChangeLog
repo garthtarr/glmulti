@@ -17,3 +17,8 @@ fixed: bug when using plot.glmulti with type="s"
 fixed: startup of the java VM
 fixed: minor bug when using method="r"
 
+Version: 0.6-3 (2010-09-1)
+added: weightable function to automatically generate a table of IC values and weights (thanks to Jarrett Byrnes)
+added: out-of-the-box support for negative binomial glms (glm.nb)
+fixed: bug when using predict and coef on lists of glmulti objects, and when feeding newdata to predict (thanks to Jarrett Byrnes)
+
