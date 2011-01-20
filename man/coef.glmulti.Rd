@@ -9,7 +9,7 @@ from the multiple models in the confidence set (or a subset of them). This allow
 }
 \usage{
 # S3 coef method for class 'glmulti'
-coef.glmulti(object, select="all", varweighting="Buckland", ...)
+coef.glmulti(object, select="all", varweighting="Buckland", alphaIC=0.05,  ...)
 
 # S3 predict method for class 'glmulti'
 predict.glmulti(object, select="all", newdata=NA, ...)
@@ -25,6 +25,8 @@ predict.glmulti(object, select="all", newdata=NA, ...)
 	
 	\item{newdata}{New data for which to predict values}
 	
+	\item{alphaIC}{The alpha risk when building the confidence interval for model averaged estimates}
+	
    \item{\dots}{ Further arguments.}
 }
 \details{
@@ -37,7 +39,7 @@ If it more than one, models within \emph{x} IC units from the best model are use
 \value{
 
 
-\code{coef} returns a data.frame with model-averaged estimates of the different parameters in the models, as well as their unconditional variance and their importance. 
+\code{coef} returns a data.frame with model-averaged estimates of the different parameters in the models, as well as their unconditional variance, importance, and a sophisticated confidence interval proposed by Burnham \& Anderson 2002. 
  
 
 \code{predict} returns a list of three data.frames: the multi-model predictions, their variability across models, and the predictions from each model separetely.

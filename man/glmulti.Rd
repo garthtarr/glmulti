@@ -6,13 +6,13 @@
 \description{
 \code{glmulti} finds what are the \code{n} best models (the confidence set of models) among all possible models (the candidate set, as specified by the user).
 Models are fitted with the specified fitting function (default is \code{glm}) and are ranked with the specified Information Criterion (default is \code{aicc}).
-The best models are found either through an exhaustive screening of the candidates or using a genetic algorithm, which allows very large candidate sets to be adressed.
+The best models are found either through exhaustive screening of the candidates, or using a genetic algorithm, which allows very large candidate sets to be adressed.
 The output can be used for model selection, variable selection, and multimodel inference.
 }
 
 \usage{
 #  glmulti S4 generic 
-glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE, marginality = FALSE, chunk = 1, chunks = 1,
+glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE, marginality = FALSE, bunch=30, chunk = 1, chunks = 1,
 		level = 2, minsize = 0, maxsize = -1, minK = 0, maxK = -1, method = "h", crit = "aicc", confsetsize = 100, popsize = 100, mutrate = 10^-3, sexrate = 0.1, imm = 0.3, plotty = TRUE, report = TRUE, deltaM = 0.05, deltaB = 0.05, conseq = 5, fitfunction = "glm", resumefile = "id", ...)
 
 
@@ -43,15 +43,15 @@ glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE,
   \item{maxK}{ This sets a constraint on candidate models. Maximal complexity of candidate models (negative = no constraint)}
     
   \item{method}{ The method to be used to explore the candidate set of models. If "h" an exhaustive screening is undertaken. If "g" the genetic algorithm is employed (recommended for large candidate sets).
-			If "d", a simple summary of the candidate set is printed, including the number of candidate models.}
+			If "l", a very fast exhaustive branch-and-bound algorithm is used. Package leaps must then be loaded, and this can only be applied to linear models with covariates and no interactions.  If "d", a simple summary of the candidate set is printed, including the number of candidate models.}
   \item{crit}{The Information Criterion to be used. This should be a function that accepts a fitted model as first argument. Default is the small-sampled corrected Akaike IC (aicc).
 	Other provided functions are the Bayes IC (\code{bic}), the original AIC (\code{aic}) and QAIC/QAICc (\code{qaic} and \code{qaicc}).}
-  \item{fitfunction}{ The fitting function to be used. Any function similar to glm can be used}
+  \item{fitfunction}{ The fitting function to be used. Any function similar to glm can be used. See Examples}
   \item{confsetsize}{ The number of models to be looked for, i.e. the size of the returned confidence set. }
 	
   \item{plotty}{ Whether to plot the progress of the IC profile when running.}
   \item{report}{ Whether to report about the progress at run time.} 
- 
+ \item{bunch}{The number of model formulas to be returned (to be fitted) at each call to the enumerator. Exhaustive screening only.}
   \item{chunk}{When using an exhaustive screening approach, it can be splitted in several parts to take advantage of multiple CPUs. 
 	chunk is an integer specifying which part the current call should perform.}
   \item{chunks}{When splitting an exhaustive screening, the total number of parts the task should be divided into.
@@ -72,12 +72,12 @@ glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE,
 \details{
   \code{glmulti} is defined as a S4 function. It acts as a frontend that calls background compiled functions (contained if archive glmulti.jar).
   Running the function therefore requires a Java Running Environment, and package \code{rJava}.
-  A thorough description of this function and package can be found in the article by Calcagno and de Mazancourt.
+  A thorough description of this function and package can be found in the article by Calcagno and de Mazancourt (see References).
   \code{print.glmulti} and \code{summary.glmulti} are S3 methods which provide a synthesis of \code{glmulti} analyses.
   
 }
 \value{
- An object of class \code{glmulti} is returned. It is a S4 object with several slots containing all the relevant data for model selection and beyond.
+ An object of class \code{glmulti} is returned. It is a S4 object with several slots containing relevant data for model selection and beyond.
  
 Several standard S3 functions are provided to help access the content of this object.
  
@@ -87,7 +87,7 @@ When running a genetic algorithm, two tiny \code{java} files (serialized objects
 
 }
 \references{ 
-Buckam (1997) Model Selection: an Integral Part of Inference. Biometrics 10:41
+Buckland (1997) Model Selection: an Integral Part of Inference. Biometrics 10:41
 Burnham & Anderson (2002) Model Selection and Multimodel Inference: an Information Theoretic Approach
 Calcagno \& de Mazancourt 2010 J. Stat. Soft. v34 i12. See http://www.jstatsoft.org/v34/i12
 
@@ -95,8 +95,72 @@ Calcagno \& de Mazancourt 2010 J. Stat. Soft. v34 i12. See http://www.jstatsoft.
 \author{Vincent Calcagno, McGill University, Canada }
 
 
-\seealso{ \code{\link{consensus}}, \code{\link{aic}}, \code{\link{summary.glmulti}}, \code{\link{coef.glmulti}}, \code{\link{step}}}
+\seealso{ \code{\link{consensus}}, \code{\link{aic}}, \code{\link{weightable}}, \code{\link{summary.glmulti}}, \code{\link{coef.glmulti}}, \code{\link{step}}}
 
+\examples{
+# A. This shows how to use a custom fitting function, taking the example of mixed models and lmer
+# we load the lme4 package
+library(lme4)
+# some random data
+vy = 1:100
+va = runif(100)
+vb = runif(100)
+vc = factor(round(runif(100))) 
+# assume we want to use a random effect to control for the factor vc
+# There are three small steps to take:
+# 1. we first define a wrapper to lmer
+lmer.glmulti <- function (formula, data, random = "", ...) {
+	lmer(paste(deparse(formula), random), data = data, ...)
+}
+# the fixed-effects are passed as formula, and the random effects are passed as "random"
+# 2. We now define the corresponding getfit method (allowing access to fitted parameters)
+setMethod('getfit', 'mer', function(object, ...) {
+  summary(object)@coefs[,1:2]
+})
+# 3.Last, we must provide the corresponding aicc method, since the default will not work with mer objects
+setMethod('aicc', 'mer', function(object, ...) {
+	liliac<- logLik(object)
+	k<-attr(liliac,"df")
+	n= object@dims['n']
+	return(-2*as.numeric(liliac[1]) + 2*k*n/max(n-k-1,0))
+})
+# we are now ready to go:
+glmulti(vy~va*vb,level=2,fitfunc=lmer.glmulti,random="+(1|vc)")-> bab
+plot(bab)
+summary(bab)
+weightable(bab)
+coef(bab)
+# fixed-effects are shuffled and the random part is constant
+
+
+# B. This shows how to do the same for zero-inflated poisson models
+# we load the required package
+library(pscl)
+# a random vector of count data
+round(runif(100, 0,20)*round(runif(100)))-> vy2
+# 1. The wrapper function
+zeroinfl.glmulti=function(formula, data, inflate = "|1",...)  {
+    zeroinfl(as.formula(paste(deparse(formula), inflate)),data=data,...)
+} 
+# 2 and 3. Unlike before, the default getfit and aicc method will work for zeroinfl objects, so no need to redefine them!
+# we can proceed directly
+glmulti(vy2~va*vb,fitfunc=zeroinfl.glmulti,inflate="|1")->bab
+
+
+
+
+# C. This shows how to include some terms in ALL the models
+# As above, we just prepare a wrapper of the fitting function
+glm.redefined = function(formula, data, always="", ...) {
+glm(as.formula(paste(deparse(formula), always)), data=data, ...)
+}
+# we then use this fitting function in glmulti
+glmulti(vy~va,level=1,fitfunc=glm.redefined,always="+vb")-> bab
+# va will be shuffled but vb is always included in the models
+
+# this procedure allows support of arbitrarily any fitting function, or the use of sophisticated constraints on the model structure
+
+}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{models }

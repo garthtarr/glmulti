@@ -16,7 +16,6 @@ Objects will never be created directly but through calls of \code{glmulti} or by
     \item{\code{params}:}{Object of class \code{"list"} : parameter values used when calling \code{glmulti} to produce the object.}
     \item{\code{nbmods}:}{Object of class \code{"integer"} : the number of models that have been found by \code{glmulti}. }
     \item{\code{crits}:}{Object of class \code{"numeric"} : the IC values of the models found, in ascending order. }
-    \item{\code{codes}:}{Object of class \code{"data.frame"}: for each model (rows), a description of which terms are present/absent in its formula. }
     \item{\code{K}:}{Object of class \code{"integer"} : for each model, its complexity, from best to worst model. }
     \item{\code{formulas}:}{Object of class \code{"list"} : for each model, its formula, from best to worst. }
     \item{\code{call}:}{Object of class \code{"call"} : the original \code{glmulti} call that produced this object. }

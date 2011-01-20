@@ -22,3 +22,17 @@ added: weightable function to automatically generate a table of IC values and we
 added: out-of-the-box support for negative binomial glms (glm.nb)
 fixed: bug when using predict and coef on lists of glmulti objects, and when feeding newdata to predict (thanks to Jarrett Byrnes)
 
+Version: 0.6-4 (2010-12-1)
+added: coef: confidence intervals are now returned for each estimate, in addition to the unconditional variance
+fixed: coef: small problem when using Johnson's method to compute the unconditional variance
+fixed: coef: small issue when the null model was in the confidence set: importance of the intercept was slightly underestimated
+changed: the number of calls to java has been reduced by preparing several (parameter bunch) model formuls at a time to be fitted in R all at once.
+
+Version: 0.7 (2011-01-20)
+added: much faster method "l" for exhaustive screening with only covariates, using a branch-and-bound algorithm.
+added: built-in support for mixed-models (lmer from lme4)
+changed: all multi-model inference is now to be done with coef. Hence the glmulti objects no longer contain the codes and termweights fields. Summary no longer returns term weights. Plot type "s", and model coloring (highlight), is no longer supported.
+improved: coef is more robust and presents terms sorted by importance.
+fixed: some bugs arising when using exclusions with level=2.
+fixed: bug arising when using quasi-models and QAIC/QAICc
+
