@@ -13,7 +13,7 @@ The output can be used for model selection, variable selection, and multimodel i
 \usage{
 #  glmulti S4 generic 
 glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE, marginality = FALSE, bunch=30, chunk = 1, chunks = 1,
-		level = 2, minsize = 0, maxsize = -1, minK = 0, maxK = -1, method = "h", crit = "aicc", confsetsize = 100, popsize = 100, mutrate = 10^-3, sexrate = 0.1, imm = 0.3, plotty = TRUE, report = TRUE, deltaM = 0.05, deltaB = 0.05, conseq = 5, fitfunction = "glm", resumefile = "id", ...)
+		level = 2, minsize = 0, maxsize = -1, minK = 0, maxK = -1, method = "h", crit = "aicc", confsetsize = 100, popsize = 100, mutrate = 10^-3, sexrate = 0.1, imm = 0.3, plotty = TRUE, report = TRUE, deltaM = 0.05, deltaB = 0.05, conseq = 5, fitfunction = "glm", resumefile = "id", includeobjects=TRUE, ...)
 
 
 }
@@ -65,6 +65,7 @@ glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE,
   \item{deltaB}{ The target change in best IC (defines the stop rules for the genetic algorithm) }
   \item{conseq}{ The target successive number of times with no improvement (i.e. target changes have been attained) (defines the stop rule for the GA). The greater it is, the more stringent the stop rule. }
   \item{resumefile}{ When resuming an analysis (method="r"), the name of the files from which to resume. Default uses the same as name}
+  \item{includeobjects}{Whether or not to include fiited models as objects. This makes \code{coef} and \code{predict} faster and is very convenient, but can be turned off in case fitted models are very large or are not to be used after.}
   \item{\dots}{ Further arguments to be passed to the fitting function.  E.g. maxit=50 or family=binomial }
 
 

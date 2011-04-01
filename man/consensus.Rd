@@ -21,6 +21,7 @@ consensus(xs, confsetsize = NA, ...)
 \details{
  The name of the returned object is the name of the first object passed, with "consensus-" prepended.
  The \code{params} slot of the returned object is taken from the first object too.
+ Note that if not all \code{glmulti} objects in xs do contain fitted model objects, then no model object will be included in the returned \code{glmulti} object.
 }
 \value{
  A standard object of class \code{glmulti}

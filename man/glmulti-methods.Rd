@@ -12,7 +12,7 @@
 \description{
 code{glmulti} finds what are the \code{n} best models (the confidence set of models) among all possible models (the candidate set, as specified by the user).
 Models are fitted with the specified fitting function (default is \code{glm}) and are ranked with the specified Information Criterion (default is \code{aicc}).
-The best models are found either through an exhaustive screening of the candidates or using a genetic algorithm, which allows very large candidate sets to be adressed.
+The best models are found either through exhaustive screening of the candidates or using a genetic algorithm, which allows very large candidate sets to be adressed.
 The output can be used for model selection, variable selection, and multimodel inference.
 }
 \section{Methods}{

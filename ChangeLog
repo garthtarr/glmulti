@@ -25,8 +25,8 @@ fixed: bug when using predict and coef on lists of glmulti objects, and when fee
 Version: 0.6-4 (2010-12-1)
 added: coef: confidence intervals are now returned for each estimate, in addition to the unconditional variance
 fixed: coef: small problem when using Johnson's method to compute the unconditional variance
-fixed: coef: small issue when the null model was in the confidence set: importance of the intercept was slightly underestimated
-changed: the number of calls to java has been reduced by preparing several (parameter bunch) model formuls at a time to be fitted in R all at once.
+fixed: coef: small issue when the null model was in the confidence set: importance of the intercept was a bit underestimated
+changed: the number of calls to java has been reduced by preparing several (parameter bunch) model formulas at a time to be fitted in R all at once.
 
 Version: 0.7 (2011-01-20)
 added: much faster method "l" for exhaustive screening with only covariates, using a branch-and-bound algorithm.
@@ -35,4 +35,16 @@ changed: all multi-model inference is now to be done with coef. Hence the glmult
 improved: coef is more robust and presents terms sorted by importance.
 fixed: some bugs arising when using exclusions with level=2.
 fixed: bug arising when using quasi-models and QAIC/QAICc
+
+Version: 0.8 (2011-04-01)
+fixed: bug in coef yielding to small errors in the model-averaged estimates and inflated uncond. variances.
+
+Version: 1.0 (2011-04-10)
+First 'stable' release! Behavior has now been reasonably (still no warranty though!) checked for all provided functions.
+New: coef() can now compute model averaged confidence intervals according to 3 methods: standard/Lukacs/Burnham
+New: predict() can now return standard errors and CI of model-averaged predictions (via se.fit=T).
+New: fitted model objects are now by default stored in the glmulti object, making coef() and predict() much faster.
+New: plot now supports type="r", presenting diagnostics of the residuals for the best models.
+
+
 

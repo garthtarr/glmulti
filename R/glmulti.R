@@ -1,6 +1,6 @@
 # S4 class definition
 setClass("glmulti", representation(name="character", params="list", nbmods="integer", crits="numeric", 
-		 K="integer", formulas="list", call="call", adi="list"))
+		 K="integer", formulas="list", call="call", adi="list",objects="list"))
 
 
 	
@@ -15,10 +15,11 @@ summary.glmulti<-function(object, ...)
 	wwc=lapply(1:length(ww),cucu)
 	ret=list(name=object@name, method=object@params$method, fitting=object@params$fitfunction, crit=object@params$crit, 
 			level=object@params$level, marginality=object@params$marginality,confsetsize=object@params$confsetsize, 
-			bestic=object@crits[1], icvalues=object@crits ,	bestmodel=who,modelweights=ww)
+			bestic=object@crits[1], icvalues=object@crits ,	bestmodel=deparse(who[[1]]), modelweights=ww)
 	if (object@params$method == "g") {
 		ret=c(ret, generations=object@params$generations, elapsed= (object@params$elapsed)/60)
 	}
+	ret=c(ret, includeobjects=(length(object@objects)>0)) 
 	ret
 }
 
@@ -33,7 +34,7 @@ print.glmulti<-function(x, ...)
 	write(paste("Best model:",sep=""), file="")
 	who=x@formulas[x@crits==x@crits[1]]
 	for (w in who)
-		print(w)
+		print(deparse(w))
 	ww = exp(-(x@crits - x@crits[1])/2)
 	ww=ww/sum(ww)
 	write(paste("Evidence weight: ",ww[1], sep=""), file="")
@@ -63,16 +64,28 @@ plot.glmulti<-function(x, type="p", ...)
 		cucu=function(i) sum(ww[1:i])
 		wwc=lapply(1:length(ww),cucu)
 		abline(v=min(which(wwc>=0.95)),col="red")
-	} else {
-		warning("plot: Invalid type argument for plotting glmulti objects.")
-	}
+	} else if (type=="r") {
+		if (length(x@objects)) {
+		# shows some diagnostics of the fit
+		windows(21,7)
+		par(mfrow=c(2,min(length(x@crits), 5)))
+		for (k in 1:min(length(x@crits), 5)) 
+			plot(x@objects[[k]],which=c(1), main=deparse(x@formulas[[k]]),...)
+		for (k in 1:min(length(x@crits), 5)) 
+			plot(x@objects[[k]],which=c(2),...)
 	
-	
+		} else warning("Unavailable: use includeobjects=T when calling glmulti.")
+			
+	} else	warning("plot: Invalid type argument for plotting glmulti objects.")
 }
 
 
+
+
+
+
 # model averaging: done through coef
-coef.glmulti <- function(object, select="all", varweighting="Buckland", alphaIC=0.05, ...) 
+coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod="Lukacs", alphaIC=0.05, ...) 
 {
 	ww = exp(-(object@crits - object@crits[1])/2)
 	ww=ww/sum(ww)
@@ -94,7 +107,11 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", alphaIC=
 		}
 	mods = object@crits[whom]
 	formo = object@formulas[whom]
-	# fit selected models
+	if (length(object@objects) >0) {
+	# model objects included: no need to refit
+	coffee = object@objects[whom]
+	} else {
+	# refit models	# fit selected models
 	coffee=list()
 	for (i in formo) {
 		ff=object@params$fitfunction
@@ -109,6 +126,7 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", alphaIC=
 			}
 		modf=eval(cak)
 		coffee=c(coffee,list(modf))
+	}
 	}
 	
 	# construct list of coefficients
@@ -166,13 +184,16 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", alphaIC=
 	coconutM[is.na(coconutM)]=0
 	coconutM[is.na(coconutSE)]=0
 	coconutN =  t(lol[(1:length(namou))+2*length(namou),])
+	
 	nene = matrix(rep(1,length(whom))%*%coconutN, nc=1, dimnames=list( namou, c("Nb models")))
 	# construct weight vectors
 	waou=ww[whom]/sum(ww[whom])
-	waouv= t(matrix(rep(waou,length(namou)),length(namou),length(whom)))*coconutN
+	waouv=waou
+	for (i in 2:length(namou)) waouv=rbind(waouv,waou) 
+	waouv= t(waouv)*coconutN
 	totwaou = waou%*%coconutN
 	# weight estimates
-	averest = matrix((rep(1,length(whom))%*%(waouv*coconutM))/totwaou, nc=1, dimnames=list( namou, c("Estimate")))
+	averest = matrix((rep(1,length(whom))%*%(waouv*coconutM)), nc=1, dimnames=list( namou, c("Estimate")))
 	weighty =  matrix(totwaou, nc=1, dimnames=list( namou, c("Importance")))
 	# weight variances
 	if (varweighting=="Johnson") {
@@ -187,13 +208,23 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", alphaIC=
 		avervar = matrix(rep(NA,length(namou)), nc=1, dimnames=list( namou, c("Uncond. variance")))
 
 	# now move on to confidence intervals
+	if (icmethod=="Burnham") {
 	# uses Burnham & Anderson (2002) suggestion
 	stuvals = (as.numeric(lapply(coffee,  function(x) qt(1-alphaIC/2, attr(logLik(x),"df"))))/qnorm(1-alphaIC/2))^2
 	adjsem= (matrix(rep(stuvals, length(namou)), nr=length(whom)))*coconutSE^2
 	adjsem = adjsem + (coconutM-t(matrix(rep(averest, length(whom)), nc=length(whom))))^2
 	adjse = qnorm(1-alphaIC/2)*(waou%*%sqrt(adjsem))
 	uncondIC = matrix(adjse, nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
-	
+	} else if (icmethod=="Lukacs") {
+	# uses Lukacs et al. (2008) student-like method
+	# get degrees of freedom for each model
+	ddf = as.numeric(lapply(coffee,  function(x) attr(logLik(x),"df")))
+	averddf = sum(waou*ddf)
+	uncondIC = matrix(sqrt(avervar)*qt(1-alphaIC/2,averddf), nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+	} else {
+	# uses standard gaussian interval 
+	uncondIC = matrix(sqrt(avervar)*qnorm(1-alphaIC/2), nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+	}
 
 	averaging = cbind(averest, avervar, nene, weighty, uncondIC)
 	ordonat = order(weighty[,1])
@@ -201,8 +232,18 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", alphaIC=
 }
 
 
+
+
+
+
+
+
+
+
+
+
 # model averaged prediction
-predict.glmulti <- function(object, select="all", newdata=NA, ...) 
+predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, icmethod="Lukacs", alphaIC=0.05,...) 
 {
 	ww = exp(-(object@crits - object@crits[1])/2)
 	ww=ww/sum(ww)
@@ -224,7 +265,11 @@ predict.glmulti <- function(object, select="all", newdata=NA, ...)
 		}
 	mods = object@crits[whom]
 	formo = object@formulas[whom]
-	# fit selected models
+	if (length(object@objects) >0) {
+	# model objects included: no need to refit
+	coffee = object@objects[whom]
+	} else {
+	# refit models
 	coffee=list()
 	for (i in formo) {
 		ff=object@params$fitfunction
@@ -237,16 +282,25 @@ predict.glmulti <- function(object, select="all", newdata=NA, ...)
 		modf=eval(cak)
 		coffee=c(coffee,list(modf))
 	}
+	}
+	
+	
 	waou=ww[whom]/sum(ww[whom])
 	# make predictions
-	preds=list()
+	predicts=list()
 	for (i in 1:length(formo)) {
-		if(is.na(newdata[1]))	{
-        			preds = c(preds, list(predict(coffee[[i]])))
+		if(!is.data.frame(newdata))	{
+				arlette = predict(coffee[[i]],se.fit=se.fit, ...)
+        		predicts = c(predicts, list(arlette))
         		} else {
-       			 preds = c(preds, list(predict(coffee[[i]], newdata=newdata)))
+        		arlette = predict(coffee[[i]], newdata=newdata, se.fit=se.fit, ...)
+       			 predicts = c(predicts, list(arlette))
 		}
 	}
+	# handle average predictions
+	if (se.fit) { 
+	preds=lapply(predicts,function(x) x[[1]])
+	}  else preds = predicts
 	nbpo = length(preds[[1]])
 	all = t(matrix(unlist(preds), nr=nbpo))
 	dimnames(all)=list(c(), names(preds[[1]]) )
@@ -258,18 +312,57 @@ predict.glmulti <- function(object, select="all", newdata=NA, ...)
 		preds[[i]][is.na(preds[[i]])] = 0
 		}
 	minou = matrix(waou%*%t(matrix(unlist(preds),nr=nbpo)), dimnames=list(names(preds[[1]]),c() )) 
-	vava = matrix(waou%*%t(matrix((unlist(preds)-unlist(rep(minou[1,],length(preds))))^2, nr=nbpo)),dimnames=list(names(preds[[1]]),c()))
-	list(averages = minou, variances = vava, all = all, omittedNA = nbok)
+	
+	# handle variances if appropriate
+	mvar=NULL
+	if (se.fit) {
+		waouv=waou
+		if (nbpo>1) for (i in 2:nbpo) waouv=rbind(waouv,waou) 
+		waouv= matrix(t(waouv),nr=length(whom),nc=nbpo)
+		predse=lapply(predicts,function(x) x[[2]])
+		allse = t(matrix(unlist(predse), nr=nbpo))
+		dimnames(allse)=list(c(), names(predse[[1]]) )
+		# handle NA values
+		nana = lapply(predse, is.na)
+		nbok2 = numeric(nbpo)
+		for (i in 1:length(predse)) {
+			nbok2 = nbok2 + nana[[i]]
+			predse[[i]][is.na(predse[[i]])] = 0
+		}
+		# compute variance components
+		squaredevs = ((all-t(matrix(rep(minou,length(whom)), nbpo, length(whom)))))^2
+		condivars = allse^2
+		avervar = matrix((rep(1,length(whom))%*%(waouv*(sqrt(squaredevs+condivars))))^2, nc=1, dimnames=list( names(predse[[1]]), c("Uncond. variance")))
+		# move on to confidence intervals
+		if (icmethod=="Burnham") {
+			# uses Burnham & Anderson (2002) suggestion
+			stuvals = (as.numeric(lapply(coffee,  function(x) qt(1-alphaIC/2, attr(logLik(x),"df"))))/qnorm(1-alphaIC/2))^2
+			adjsem= (matrix(rep(stuvals, nbpo), nr=length(whom)))*allse^2
+			adjsem = adjsem + (all-t(matrix(rep(minou, length(whom)), nc=length(whom))))^2
+			adjse = qnorm(1-alphaIC/2)*(waou%*%sqrt(adjsem))
+			uncondIC = matrix(adjse, nc=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+		} else if (icmethod=="Lukacs") {
+			# uses Lukacs et al. (2008) student-like method
+			# get degrees of freedom for each model
+			ddf = as.numeric(lapply(coffee,  function(x) attr(logLik(x),"df")))
+			averddf = sum(waou*ddf)
+			uncondIC = matrix(sqrt(avervar)*qt(1-alphaIC/2,averddf), nc=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+		} else {
+			# uses standard gaussian interval 
+			uncondIC = matrix(sqrt(avervar)*qnorm(1-alphaIC/2), nc=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+		}
+		mvar = cbind(avervar, uncondIC)
+		
+	}
+	
+	list(averages = t(minou), variability = mvar, omittedNA = sum(nbok))
 	
 }
 
+
+
 #  S4 function definitions
 
-# generic function
-setGeneric("glmulti", function(y, xr, data, exclude=c(), name="glmulti.analysis", intercept=TRUE, marginality=FALSE , bunch = 30, chunk=1, chunks=1, 
-		level=2, minsize=0, maxsize=-1, minK=0, maxK=-1, method="h",crit="aicc",confsetsize=100,popsize=100,mutrate=10^-3,
-		sexrate=0.1,imm=0.3, plotty=TRUE, report=TRUE, deltaM=0.05, deltaB=0.05, conseq=5, fitfunction="glm", resumefile = "id",  ...) 
-		standardGeneric("glmulti"))
 		
 # write redefinition
 setGeneric("write", function(x, file = "data",   ncolumns=if(is.character(x)) 1 else 5, append = FALSE, sep = " ") standardGeneric("write"))
@@ -315,7 +408,9 @@ setMethod("consensus", signature(xs="list"), function (xs, confsetsize, ...)
 				lespaul=c(lespaul,paul)
 		}
 	}
+	takeobjects = (min(sapply(lespaul, function (x) length(x@objects)))>0) 
 	neo = new ("glmulti")
+	neo@objects=list()
 	conca = function (x) {
 		cbind(data.frame(K=x@K),data.frame(IC=x@crits), data.frame(formulas=as.character(x@formulas)))
 	}
@@ -326,17 +421,33 @@ setMethod("consensus", signature(xs="list"), function (xs, confsetsize, ...)
 	tot = tota
 	tot = tot[!duplicated(tot$formulas),]
 	tot = tot[order(tot$IC),]
+	
+	if (takeobjects) {
+	concab = function (x) {
+		x@objects
+	}
+	tob = lapply(lespaul, concab)
+	toba = tob[[1]]
+	for (h in 2: length(tob))
+		toba = c(toba, tob[[h]])
+	tob=toba
+	tob = tob[!duplicated(tot$formulas)]
+	tob = tob[order(tot$IC)]
+	}
+	
 	if (is.na(confsetsize) || length(tot$K)<confsetsize) {
 		if (!is.na(confsetsize)&&length(tot$K)<confsetsize)
 			warning("Could not gather enough models.")
 		neo@K = tot$K
 		neo@formulas =  as.list(lapply(unlist(lapply(tot$formulas, function(j) as.character(j))), function(ff) as.formula(c(ff))))
 		neo@crits = tot$IC
+		if (takeobjects) neo@objects = tob
 	} else {
 		tot = tot[1:confsetsize, ]
 		neo@K = tot$K
 		neo@formulas = as.list(lapply(unlist(lapply(tot$formulas, function(j) as.character(j))), function(ff) as.formula(c(ff))))
 		neo@crits = tot$IC
+		if (takeobjects) neo@objects = tob[1:confsetsize]
 	}
 	neo@call = lespaul[[1]]@call
 	neo@adi = lespaul[[1]]@adi
@@ -344,6 +455,10 @@ setMethod("consensus", signature(xs="list"), function (xs, confsetsize, ...)
 	neo@params = lespaul[[1]]@params
 	return (neo)
 	})
+
+
+
+
 
 # information criteria
 setGeneric("aicc", function(object, ...) standardGeneric("aicc"))
@@ -406,20 +521,33 @@ setMethod("weightable", "glmulti",  function(object, ...)
 	return(ret)
 })
 
+
+
+
+
+
+# generic glmulti function
+setGeneric("glmulti", function(y, xr, data, exclude=c(), name="glmulti.analysis", intercept=TRUE, marginality=FALSE , bunch = 30, chunk=1, chunks=1, 
+		level=2, minsize=0, maxsize=-1, minK=0, maxK=-1, method="h",crit="aicc",confsetsize=100,popsize=100,mutrate=10^-3,
+		sexrate=0.1,imm=0.3, plotty=TRUE, report=TRUE, deltaM=0.05, deltaB=0.05, conseq=5, fitfunction="glm", resumefile = "id", includeobjects=TRUE,  ...) 
+		standardGeneric("glmulti"))
+
+
+
 	
 # interfaces for formulas/models: calls with missing xr argument
 setMethod("glmulti","missing",
 function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chunks, 
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
-		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,  ...) 
+		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects,  ...) 
 {
-	write("This is glmulti 0.7, january 2011.",file="")
+	write("This is glmulti 1.0, april 2011.",file="")
 })
 
 setMethod("glmulti",
 def=function(y, xr, data, exclude, name, intercept, marginality ,bunch, chunk, chunks, 
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
-		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,  ...) 
+		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,includeobjects, ...) 
 {
 	stop("Improper call of glmulti.")
 })
@@ -428,7 +556,7 @@ def=function(y, xr, data, exclude, name, intercept, marginality ,bunch, chunk, c
 setMethod("glmulti", signature(y="formula", xr= "missing", exclude="missing"),
 function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chunks, 
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
-		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,  ...) {
+		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects, ...) {
 	if (missing(data))
 		tete = terms(y)
 	else
@@ -472,7 +600,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 setMethod("glmulti", signature(y="character", xr= "missing", exclude="missing"),
 function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chunks, 
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
-		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,  ...) {
+		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects, ...) {
 	call = match.call()
 	call[[match("y", names(call))]] = as.formula(y)
 	eval(call)
@@ -481,7 +609,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 setMethod("glmulti", signature(y="glm", xr= "missing", exclude="missing"),
 function(y, xr, data, exclude, name, intercept, marginality ,bunch, chunk, chunks, 
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
-		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,  ...) {
+		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects, ...) {
 	call = match.call()
 	call[[match("y", names(call))]] = formula(y)
 	call[[length(names(call))+1]] = "glm"
@@ -496,7 +624,7 @@ function(y, xr, data, exclude, name, intercept, marginality ,bunch, chunk, chunk
 setMethod("glmulti", signature(y="lm", xr= "missing", exclude="missing"),
 function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chunks, 
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
-		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,  ...) {		
+		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects, ...) {		
 	call = match.call()
 	call[[match("y", names(call))]] = formula(y)
 	call[[length(names(call))+1]] = "lm"
@@ -516,7 +644,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 setMethod("glmulti", signature(y="character", xr= "character"),
 function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chunks, 
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
-		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,  ...) 
+		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects, ...) 
 {
 	if (report) write("Initialization...",file="")
 
@@ -574,6 +702,18 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 				as.integer(maxsize),as.integer(minK),as.integer(maxK),intercept,marginality)
 		if (!.jfield(molly,"Z","ok")) {
 			warning("!Oversized candidate set.")
+			return(-1)
+		}
+		# check for the number of predictors
+		okidok=T
+		if (method!="l") 
+		if (level==1 ) {
+			okidok = (nc<=32 && nq<=32)
+		} else {
+			okidok =  (nc<16 && nq<16 && nc*nq<128)
+		}
+		if (!okidok) {
+			warning("!Too many predictors.")
 			return(-1)
 		}
 
@@ -651,6 +791,8 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 	lesCrit<-numeric(confsetsize)
 	lesK<-vector('integer',confsetsize)
 	lesForms<-vector('character',confsetsize)
+	
+	lesObjects = list()
 
 	# proceed with fitting
 	curr<-0
@@ -675,6 +817,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 				lesForms[sel]=formula[momo]
 				lesCrit[sel]=cricri
 				lesK[sel]=attr(logLik(beber[[momo]]),"df")
+				lesObjects=c(lesObjects, list(beber[[momo]]))
 			} else {
 				mini=max(lesCrit)
 				if (cricri<mini) {
@@ -682,6 +825,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 					lesForms[ou]=formula[momo]
 					lesCrit[ou]=cricri
 					lesK[ou]=attr(logLik(beber[[momo]]),"df")
+					lesObjects[[ou]] = beber[[momo]]
 				}
 			}
 		}
@@ -711,6 +855,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 	resulto@formulas = lapply(lesForms[1:sel][reglo],as.formula)
 	resulto@K = as.integer(lesK[1:sel][reglo])
 	resulto@nbmods = as.integer(sel)
+	if (includeobjects) resulto@objects = lesObjects[reglo] else resulto@objects = list()
 	return(resulto)
 	
 	#
@@ -782,6 +927,8 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 	lesic = lesic[lesic<=thresh]
 	nbmodels = length(KK)
 	if (report) write(paste(nbmodels, "first best models identified."),file="")
+		
+	#
 	# pack the object
 	resulto@crits = lesic
 	resulto@K  = as.integer(KK+1+pena)
@@ -790,8 +937,15 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 			if (intercept) as.formula(paste(y, paste(c("1", xq[-1][x]), collapse="+"),sep="~"))
 			else as.formula(paste(y, paste(c("-1", xq[-1][x]), collapse="+"),sep="~"))
 	}) -> formo
-	resulto@formulas =formo			
+	resulto@formulas = formo			
 	resulto@nbmods = as.integer(nbmodels)
+	# if objects are requested to be included, refit models
+	if (includeobjects) {
+	fitfunc = match.fun(fitfunction)
+	lesObjects= lapply(formo, function(x) fitfunc(x, data=data, ...))
+	resulto@objects = lesObjects
+	}	
+
 	return(resulto)
 	
 	#
@@ -813,6 +967,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 				sexrate=sexrate,imm=imm, plotty=plotty, deltaM=deltaM, deltaB=deltaB, conseq=conseq, resumefile = resumefile)
 		resulto@call=match.call()
 		resulto@adi=list(...)
+		lesObjects=list()
 		
 		write("Initialization...",file="")
 		currgen = 0
@@ -895,6 +1050,11 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 		resulto@formulas = lapply(lesForms[reglo],as.formula)
 		resulto@K = as.integer(lesKK)
 		resulto@nbmods = as.integer(sel)
+		# if objects are requested to be included, refit models
+		if (includeobjects) {
+			lesObjects= lapply(lesForms[reglo], function(x) if (!is.na(x)) fitfunc(as.formula(x), data=data, ...) else NA)
+			resulto@objects = lesObjects
+		}	
 		resulto@params = c(resulto@params, list(generations=currgen, elapsed=as.numeric(Sys.time()-tini), dynat=dyniT, dynab=dyniB, dynam=dyniM))
 		return(resulto)
 

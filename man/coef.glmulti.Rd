@@ -2,17 +2,17 @@
 \alias{predict.glmulti}
 \alias{coef.glmulti}
 
-\title{Multimodel inference with glmulti}
+\title{Model averaging and multimodel inference with glmulti}
 \description{
-These functions, applied on a \code{glmulti} object, produce model-averaged coefficients and predictions
-from the multiple models in the confidence set (or a subset of them). This allows easy multi-model inference.
+These functions, applied on a \code{glmulti} object, produce model-averaged estimates, unconditional confidence intervals, and predictions
+from the models in the confidence set (or a subset of them). They are equivalents of the standard \code{coef} and \code{predict} for single models.
 }
 \usage{
 # S3 coef method for class 'glmulti'
-coef.glmulti(object, select="all", varweighting="Buckland", alphaIC=0.05,  ...)
+coef.glmulti(object, select="all", varweighting="Buckland", icmethod="Lukacs", alphaIC=0.05,  ...)
 
 # S3 predict method for class 'glmulti'
-predict.glmulti(object, select="all", newdata=NA, ...)
+predict.glmulti(object, select="all", newdata=NA, se.fit=FALSE, icmethod="Lukacs", alphaIC=0.05,  ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,13 +21,17 @@ predict.glmulti(object, select="all", newdata=NA, ...)
 	\item{select}{A specification of which models should be used for inference. By default all models are used, see below. }
 	
 	\item{varweighting}{The method to be used to compute the unconditional variance. "Buckland" implements the approach presented in Buckland et al. 1997. "Johnson" implements a slightly different approach
-	 suggested in Johnson \& Omland 2004. The latter results in slightly smaller estimates of the unconditional variance of model coefficients.}
+	 suggested in Johnson \& Omland 2004. The latter results in slightly smaller estimates of the unconditional variance of model coefficients. \code{predict} uses the Buckland weighting.}
 	
-	\item{newdata}{New data for which to predict values}
+	\item{icmethod}{Method to construct confidence intervals. One of "Standard", "Burnham" or "Lukacs". The three methods differ in their use of degrees of freedom. }
 	
-	\item{alphaIC}{The alpha risk when building the confidence interval for model averaged estimates}
+	\item{newdata}{New data.frame of data for which to predict values}
 	
-   \item{\dots}{ Further arguments.}
+	\item{se.fit}{Whether to return unconditional variances and confidence intervals associated with predicted values}
+	
+	\item{alphaIC}{The alpha risk when building the confidence intervals}
+	
+   \item{\dots}{ Further arguments to single-model \code{coef} or \code{predict}}
 }
 \details{
 
@@ -39,17 +43,19 @@ If it more than one, models within \emph{x} IC units from the best model are use
 \value{
 
 
-\code{coef} returns a data.frame with model-averaged estimates of the different parameters in the models, as well as their unconditional variance, importance, and a sophisticated confidence interval proposed by Burnham \& Anderson 2002. 
+\code{coef} returns a data.frame with model-averaged estimates of the different parameters in the models, as well as their unconditional variance, importance, and confidence interval according to one of three methods: "Standard" simply assumes a Normal distribution of the estimator (Buckland 1997), "Lukacs" assumes a Student distribution with degrees of freedom taken to be averaged across models (see Lukacs et al. 2010), and "Burnham" is a more sophisticated Student-based method proposed by Burnham \& Anderson 2002. 
  
 
-\code{predict} returns a list of three data.frames: the multi-model predictions, their variability across models, and the predictions from each model separetely.
+\code{predict} returns a list of three elements: the multi-model predictions, their variability (unconditional variance and confidence interval, if \code{se.fit=T}), and the number of NA predicted values that were treated as zeros when averaging models.
 
 
 }
 \references{ 
 Buckland et al. 1997. Model selection: an integral part of inference. Biometrics.
+Burnham \& Anderson. 2002. Model Selection and Multimodel Inference. An Information Theoretic Practical Approach.
 Johnson \& Omland. 2004. Model selection in ecology and evolution. TREE.
- }
+Lukacs et al. 2010..Model selection bias and Freedman's paradox. Annals of the Institute of Statistical Mathematics.   
+}
 \author{Vincent Calcagno, McGill University}
 
 \seealso{ 

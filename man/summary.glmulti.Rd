@@ -26,7 +26,7 @@ plot.glmulti(x, type="p", ...)
 	\item{object}{ A \code{glmulti} object}
 	\item{x}{An object of class \code{glmulti}}
 	
-  	\item{type}{The type of graph to be produced. One of "p" or "w" (see below).}
+  	\item{type}{The type of graph to be produced. One of "p", "r" or "w" (see below).}
 		
 	\item{\dots}{ Further arguments.}
 }
@@ -41,6 +41,8 @@ plot.glmulti(x, type="p", ...)
 
 \code{type="p"} plots the IC profile (the IC values form the best to the worst model). A horizontal line delineates
 models that are less than 2 IC units away from the best model.
+
+\code{type="r"} shows diagnostics of the fit (residuals versus predicted values, and QQ plot of residuals) for the five best models. It calls the \code{plot} functions on the fitted model objects, which should be defined (e.g. \code{plot.lm}, \code{plot.glm}). This type of plot can only be used if model objects are included in the \code{glmulti} object (i.e. if \code{includeobjects} was set to true).
 
 \code{type="w"} plots the normalized evidence weights of the models. A vertical line delineates models that sum um to 95% of the total weight of evidence.
 
@@ -62,6 +64,7 @@ models that are less than 2 IC units away from the best model.
   \item{bestmodel }{A list containing the formula of the best model found, or of the best models found if several had the same IC value}
   \item{generations }{The number of generations it took to converge. For genetic algorithm only.}
   \item{elapsed }{The actual (system) time it took.  For genetic algorithm only.}
+  \item{includeobjects}{A boolean indicating whether fitted model objects are contained in the object.}
 }
 \references{Calcagno \& de Mazancourt 2010 J. Stat. Soft. v34 i12. See http://www.jstatsoft.org/v34/i12}
 
