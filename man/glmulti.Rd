@@ -46,7 +46,7 @@ glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE,
 			If "l", a very fast exhaustive branch-and-bound algorithm is used. Package leaps must then be loaded, and this can only be applied to linear models with covariates and no interactions.  If "d", a simple summary of the candidate set is printed, including the number of candidate models.}
   \item{crit}{The Information Criterion to be used. This should be a function that accepts a fitted model as first argument. Default is the small-sampled corrected Akaike IC (aicc).
 	Other provided functions are the Bayes IC (\code{bic}), the original AIC (\code{aic}) and QAIC/QAICc (\code{qaic} and \code{qaicc}).}
-  \item{fitfunction}{ The fitting function to be used. Any function similar to glm can be used. See Examples}
+  \item{fitfunction}{ The fitting function to be used. Any function similar to \code{glm} can be used. See Examples}
   \item{confsetsize}{ The number of models to be looked for, i.e. the size of the returned confidence set. }
 	
   \item{plotty}{ Whether to plot the progress of the IC profile when running.}
@@ -76,6 +76,7 @@ glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE,
   A thorough description of this function and package can be found in the article by Calcagno and de Mazancourt (see References).
   \code{print.glmulti} and \code{summary.glmulti} are S3 methods which provide a synthesis of \code{glmulti} analyses.
   
+  NOTE: When calling \code{glmulti} with a model object as y, only the formula will be extracted from the object. This means that optional arguments to the fitting function (e.g. family or maxit) will NOT be extracted. These arguments should be passed to \code{glmulti} through the \dots.
 }
 \value{
  An object of class \code{glmulti} is returned. It is a S4 object with several slots containing relevant data for model selection and beyond.
@@ -111,13 +112,10 @@ vc = factor(round(runif(100)))
 # There are three small steps to take:
 # 1. we first define a wrapper to lmer
 lmer.glmulti <- function (formula, data, random = "", ...) {
-	lmer(paste(deparse(formula), random), data = data, ...)
+	lmer(paste(deparse(formula), random), data = data, REML=FALSE, ...)
 }
 # the fixed-effects are passed as formula, and the random effects are passed as "random"
-# 2. We now define the corresponding getfit method (allowing access to fitted parameters)
-setMethod('getfit', 'mer', function(object, ...) {
-  summary(object)@coefs[,1:2]
-})
+# Here we could redefine the getfit function, but this is necessary only to use coef() or predict().
 # 3.Last, we must provide the corresponding aicc method, since the default will not work with mer objects
 setMethod('aicc', 'mer', function(object, ...) {
 	liliac<- logLik(object)
@@ -130,7 +128,7 @@ glmulti(vy~va*vb,level=2,fitfunc=lmer.glmulti,random="+(1|vc)")-> bab
 plot(bab)
 summary(bab)
 weightable(bab)
-coef(bab)
+
 # fixed-effects are shuffled and the random part is constant
 
 

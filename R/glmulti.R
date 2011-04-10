@@ -19,7 +19,9 @@ summary.glmulti<-function(object, ...)
 	if (object@params$method == "g") {
 		ret=c(ret, generations=object@params$generations, elapsed= (object@params$elapsed)/60)
 	}
-	ret=c(ret, includeobjects=(length(object@objects)>0)) 
+	hasobj = try(object@objects,TRUE)
+	hasobj = (!inherits(hasobj,"try-error") && length(object@objects) > 0) 
+	ret=c(ret, includeobjects=hasobj) 
 	ret
 }
 
@@ -80,10 +82,6 @@ plot.glmulti<-function(x, type="p", ...)
 }
 
 
-
-
-
-
 # model averaging: done through coef
 coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod="Lukacs", alphaIC=0.05, ...) 
 {
@@ -105,21 +103,20 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 				else 
 					whom = which(object@crits <= (object@crits[1]+select))
 		}
+
 	mods = object@crits[whom]
 	formo = object@formulas[whom]
-	if (length(object@objects) >0) {
+	hasobj = try(object@objects,TRUE)
+	if (!inherits(hasobj,"try-error") && length(object@objects) > 0) {
 	# model objects included: no need to refit
 	coffee = object@objects[whom]
 	} else {
-	# refit models	# fit selected models
+	# refit models
 	coffee=list()
 	for (i in formo) {
 		ff=object@params$fitfunction
-		if (length(object@adi)>0)
-		cak=as.call(list(substitute(match.fun(ff)), formula=i, data=object@call$data, object@adi))
-		else
 		cak=as.call(list(substitute(match.fun(ff)), formula=i, data=object@call$data))
-		if (length(object@adi)>1)
+		if (length(object@adi)>=1)
 			for (j in 1:length(object@adi)) {
 				cak[[length(names(cak))+1]] = object@adi[[j]]
 				names(cak)[length(names(cak))] = names(object@adi)[j]
@@ -128,7 +125,6 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 		coffee=c(coffee,list(modf))
 	}
 	}
-	
 	# construct list of coefficients
 	coke=lapply(coffee,getfit)
 	namou=unique(unlist(lapply(coffee,function(x) dimnames(getfit(x))[[1]])))
@@ -162,28 +158,35 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 	gettou=function(i) {
 		ele=coke[[i]]
 		nana = dimnames(ele)[[1]]
-		mimi=numeric(3*length(namou))
+		mimi=numeric(4*length(namou))
 		if (length(nana) >1) {
 			for (k in 1:(length(nana))) {
 				mimi[matchou(nana[k])]=ele[k,1]
 				mimi[matchou(nana[k])+length(namou)]=ele[k,2]
 				mimi[matchou(nana[k])+2*length(namou)]=1
+				mimi[matchou(nana[k])+3*length(namou)]=ele[k,3]
 			}
 		} else {
 			mimi[match("(Intercept)",namou)]=ele[1]
 			mimi[match("(Intercept)",namou)+length(namou)]=ele[2]
 			mimi[match("(Intercept)",namou)+2*length(namou)]=1
+			mimi[match("(Intercept)",namou)+3*length(namou)]=ele[3]
 		}
 
 		return(mimi)
 	}
 	lol=sapply(lapply(1:length(coke),gettou),rbind)
-	coconutM = t(lol[1:length(namou),])
-	coconutSE = t(lol[(1:length(namou))+length(namou),])
+	
+	coconutM = matrix(unlist(t(lol[1:length(namou),])),nr=length(whom))
+	coconutSE = matrix(unlist(t(lol[(1:length(namou))+length(namou),])),nr=length(whom))
 	# NA are set to zero
 	coconutM[is.na(coconutM)]=0
 	coconutM[is.na(coconutSE)]=0
-	coconutN =  t(lol[(1:length(namou))+2*length(namou),])
+	coconutN =  matrix(unlist(t(lol[(1:length(namou))+2*length(namou),])),nr=length(whom))
+	
+	# handle degrees of freedom
+	coconutDF = matrix(unlist(t(lol[(1:length(namou))+3*length(namou),])),nr=length(whom))
+	modelsdf= unlist(apply(coconutDF,1,max))
 	
 	nene = matrix(rep(1,length(whom))%*%coconutN, nc=1, dimnames=list( namou, c("Nb models")))
 	# construct weight vectors
@@ -197,33 +200,32 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 	weighty =  matrix(totwaou, nc=1, dimnames=list( namou, c("Importance")))
 	# weight variances
 	if (varweighting=="Johnson") {
-		squaredevs = rep(1,length(whom))%*%(waouv*((coconutM-t(matrix(rep(averest,length(whom)), length(namou), length(whom))))^2))
-		condivars =  rep(1,length(whom))%*%(waouv*(coconutSE^2))
+		squaredevs = waou%*%(((coconutM-t(matrix(rep(averest,length(whom)), length(namou), length(whom))))^2))
+		condivars =  waou%*%((coconutSE^2))
 		avervar = matrix(condivars+squaredevs, nc=1, dimnames=list( namou, c("Uncond. variance")))
 	} else if (varweighting=="Buckland") {
 		squaredevs = ((coconutM-t(matrix(rep(averest,length(whom)), length(namou), length(whom)))))^2
 		condivars = coconutSE^2
-		avervar = matrix((rep(1,length(whom))%*%(waouv*sqrt(squaredevs+condivars)))^2, nc=1, dimnames=list( namou, c("Uncond. variance")))
+		avervar = matrix(((waou)%*%(sqrt(squaredevs+condivars)))^2, nc=1, dimnames=list( namou, c("Uncond. variance")))
 	} else 
 		avervar = matrix(rep(NA,length(namou)), nc=1, dimnames=list( namou, c("Uncond. variance")))
 
 	# now move on to confidence intervals
 	if (icmethod=="Burnham") {
-	# uses Burnham & Anderson (2002) suggestion
-	stuvals = (as.numeric(lapply(coffee,  function(x) qt(1-alphaIC/2, attr(logLik(x),"df"))))/qnorm(1-alphaIC/2))^2
-	adjsem= (matrix(rep(stuvals, length(namou)), nr=length(whom)))*coconutSE^2
-	adjsem = adjsem + (coconutM-t(matrix(rep(averest, length(whom)), nc=length(whom))))^2
-	adjse = qnorm(1-alphaIC/2)*(waou%*%sqrt(adjsem))
-	uncondIC = matrix(adjse, nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+		# uses Burnham & Anderson (2002) suggestion
+		stuvals = (as.numeric(lapply(modelsdf,  function(x) qt(1-alphaIC/2, x)))/qnorm(1-alphaIC/2))^2
+		adjsem= (matrix(rep(stuvals, length(namou)), nr=length(whom)))*coconutSE^2
+		adjsem = adjsem + (coconutM-t(matrix(rep(averest, length(whom)), nc=length(whom))))^2
+		adjse = qnorm(1-alphaIC/2)*(waou%*%sqrt(adjsem))
+		uncondIC = matrix(adjse, nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 	} else if (icmethod=="Lukacs") {
-	# uses Lukacs et al. (2008) student-like method
-	# get degrees of freedom for each model
-	ddf = as.numeric(lapply(coffee,  function(x) attr(logLik(x),"df")))
-	averddf = sum(waou*ddf)
-	uncondIC = matrix(sqrt(avervar)*qt(1-alphaIC/2,averddf), nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+		# uses Lukacs et al. (2008) student-like method
+		# get degrees of freedom for each model
+		averddf = sum(waou*modelsdf)
+		uncondIC = matrix(sqrt(avervar)*qt(1-alphaIC/2,averddf), nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 	} else {
-	# uses standard gaussian interval 
-	uncondIC = matrix(sqrt(avervar)*qnorm(1-alphaIC/2), nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+		# uses standard gaussian interval 
+		uncondIC = matrix(sqrt(avervar)*qnorm(1-alphaIC/2), nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 	}
 
 	averaging = cbind(averest, avervar, nene, weighty, uncondIC)
@@ -232,18 +234,8 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 }
 
 
-
-
-
-
-
-
-
-
-
-
 # model averaged prediction
-predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, icmethod="Lukacs", alphaIC=0.05,...) 
+predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, varweighting="Buckland", icmethod="Lukacs", alphaIC=0.05,...) 
 {
 	ww = exp(-(object@crits - object@crits[1])/2)
 	ww=ww/sum(ww)
@@ -265,7 +257,8 @@ predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, icme
 		}
 	mods = object@crits[whom]
 	formo = object@formulas[whom]
-	if (length(object@objects) >0) {
+	hasobj = try(object@objects,TRUE)
+	if (!inherits(hasobj,"try-error") &&length(object@objects) > 0) {
 	# model objects included: no need to refit
 	coffee = object@objects[whom]
 	} else {
@@ -274,7 +267,7 @@ predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, icme
 	for (i in formo) {
 		ff=object@params$fitfunction
 		cak=as.call(list(substitute(match.fun(ff)), formula=i, data=object@call$data))
-		if (length(object@adi)>1)
+		if (length(object@adi)>=1)
 			for (j in 1:length(object@adi)) {
 				cak[[length(names(cak))+1]] = object@adi[[j]]
 				names(cak)[length(names(cak))] = names(object@adi)[j]
@@ -329,23 +322,31 @@ predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, icme
 			nbok2 = nbok2 + nana[[i]]
 			predse[[i]][is.na(predse[[i]])] = 0
 		}
+		# get degrees of freedom
+		modelsdf = unlist(lapply(coffee,function(x) max(getfit(x)[,3])))
+		
 		# compute variance components
-		squaredevs = ((all-t(matrix(rep(minou,length(whom)), nbpo, length(whom)))))^2
-		condivars = allse^2
-		avervar = matrix((rep(1,length(whom))%*%(waouv*(sqrt(squaredevs+condivars))))^2, nc=1, dimnames=list( names(predse[[1]]), c("Uncond. variance")))
+			if (varweighting=="Buckland") {
+			squaredevs = ((all-t(matrix(rep(minou,length(whom)), nbpo, length(whom)))))^2
+			condivars = allse^2
+			avervar = matrix(((waou)%*%(sqrt(squaredevs+condivars)))^2, nc=1, dimnames=list( names(predse[[1]]), c("Uncond. variance")))
+		} else if (varweighting=="Johnson") {
+			squaredevs = waou%*%(((all-t(matrix(rep(minou,length(whom)), nbpo, length(whom))))^2))
+			condivars =  waou%*%((allse^2))
+			avervar = matrix(condivars+squaredevs, nc=1, dimnames=list(  names(predse[[1]]), c("Uncond. variance")))
+		}	
 		# move on to confidence intervals
 		if (icmethod=="Burnham") {
 			# uses Burnham & Anderson (2002) suggestion
-			stuvals = (as.numeric(lapply(coffee,  function(x) qt(1-alphaIC/2, attr(logLik(x),"df"))))/qnorm(1-alphaIC/2))^2
+			stuvals = (as.numeric(lapply(modelsdf,  function(x) qt(1-alphaIC/2, x)))/qnorm(1-alphaIC/2))^2
 			adjsem= (matrix(rep(stuvals, nbpo), nr=length(whom)))*allse^2
 			adjsem = adjsem + (all-t(matrix(rep(minou, length(whom)), nc=length(whom))))^2
 			adjse = qnorm(1-alphaIC/2)*(waou%*%sqrt(adjsem))
 			uncondIC = matrix(adjse, nc=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 		} else if (icmethod=="Lukacs") {
-			# uses Lukacs et al. (2008) student-like method
+			# uses Lukacs et al. (2010) student-like method
 			# get degrees of freedom for each model
-			ddf = as.numeric(lapply(coffee,  function(x) attr(logLik(x),"df")))
-			averddf = sum(waou*ddf)
+			averddf = sum(waou*modelsdf)
 			uncondIC = matrix(sqrt(avervar)*qt(1-alphaIC/2,averddf), nc=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 		} else {
 			# uses standard gaussian interval 
@@ -362,7 +363,6 @@ predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, icme
 
 
 #  S4 function definitions
-
 		
 # write redefinition
 setGeneric("write", function(x, file = "data",   ncolumns=if(is.character(x)) 1 else 5, append = FALSE, sep = " ") standardGeneric("write"))
@@ -388,10 +388,15 @@ setGeneric("getfit", function(object, ...) standardGeneric("getfit"))
 
 setMethod("getfit","ANY", function(object, ...)
 {
-	return(summary(object)$coefficients[,1:2])
+	summ = summary(object)
+	summ1 = summ$coefficients[,1:2]
+	if (length(dim(summ1))==0) {
+		didi = dimnames(summ$coefficients)
+		summ1=matrix(summ1, nr=1, nc=2, dimnames=list(didi[[1]],didi[[2]][1:2]))
+	}
+	return(cbind(summ1, data.frame(df=rep(summ$df[2], length(summ$coefficients[,1])))))
+	
 })
-
-
 
 # consensus method
 setGeneric("consensus", function (xs, confsetsize=NA, ...)  standardGeneric("consensus"))
@@ -541,7 +546,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
 		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects,  ...) 
 {
-	write("This is glmulti 1.0, april 2011.",file="")
+	write("This is glmulti 1.0.1, april 2011.",file="")
 })
 
 setMethod("glmulti",

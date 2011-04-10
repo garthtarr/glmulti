@@ -46,5 +46,13 @@ New: predict() can now return standard errors and CI of model-averaged predictio
 New: fitted model objects are now by default stored in the glmulti object, making coef() and predict() much faster.
 New: plot now supports type="r", presenting diagnostics of the residuals for the best models.
 
+Version: 1.0.1 (2011-04-10)
+Added: Backward compatibility of coef(), predict() and summary() with earlier (<1.0) glmulti objects.
+Changed: More consistent treatment of degrees of freedom in coef() and predict(). getfit() now returns degrees of freedoms as a third column.
+Fixed: Idiosyncratic bugs in coef(), caused by R switching types of matrices.
+Fixed: tendency to underestimate the unconditional variance of poorly suported effects in coef().
+Fixed: problem in coef() when passing additional arguments to the fitting function.
+Added: possibility to choose the mode of variance weighting in predict(), just like in coef().
+
 
 

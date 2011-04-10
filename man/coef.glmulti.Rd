@@ -12,7 +12,8 @@ from the models in the confidence set (or a subset of them). They are equivalent
 coef.glmulti(object, select="all", varweighting="Buckland", icmethod="Lukacs", alphaIC=0.05,  ...)
 
 # S3 predict method for class 'glmulti'
-predict.glmulti(object, select="all", newdata=NA, se.fit=FALSE, icmethod="Lukacs", alphaIC=0.05,  ...)
+predict.glmulti(object, select="all", newdata=NA, se.fit=FALSE, 
+	varweighting="Buckland", icmethod="Lukacs", alphaIC=0.05,  ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,10 +21,13 @@ predict.glmulti(object, select="all", newdata=NA, se.fit=FALSE, icmethod="Lukacs
 	
 	\item{select}{A specification of which models should be used for inference. By default all models are used, see below. }
 	
-	\item{varweighting}{The method to be used to compute the unconditional variance. "Buckland" implements the approach presented in Buckland et al. 1997. "Johnson" implements a slightly different approach
-	 suggested in Johnson \& Omland 2004. The latter results in slightly smaller estimates of the unconditional variance of model coefficients. \code{predict} uses the Buckland weighting.}
+	\item{varweighting}{The method to be used to compute the unconditional 
+	variance. "Buckland" (the default) (implements the approach presented in Buckland et al. 1997. "Johnson" implements a slightly different approach recommended in Johnson \& Omland 2004 and proposed at page 235 in 
+	 Burnham \& Anderson 2002. The latter results in slightly bigger estimates of the unconditional variance of model coefficients. }
 	
-	\item{icmethod}{Method to construct confidence intervals. One of "Standard", "Burnham" or "Lukacs". The three methods differ in their use of degrees of freedom. }
+	\item{icmethod}{Method to construct confidence intervals. One of 
+	"Standard", "Burnham" or "Lukacs". The three methods differ in their 
+	use (or not) of degrees of freedom. }
 	
 	\item{newdata}{New data.frame of data for which to predict values}
 	
@@ -31,7 +35,7 @@ predict.glmulti(object, select="all", newdata=NA, se.fit=FALSE, icmethod="Lukacs
 	
 	\item{alphaIC}{The alpha risk when building the confidence intervals}
 	
-   \item{\dots}{ Further arguments to single-model \code{coef} or \code{predict}}
+    \item{\dots}{ Further arguments to single-model \code{coef} or \code{predict}}
 }
 \details{
 
