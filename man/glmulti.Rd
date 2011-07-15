@@ -23,6 +23,7 @@ glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE,
 	specifying the response variable and the terms (main effects and/or interactions) to be used in the candidate models (e.g. height~age*sex+mass).
 	Alternatively, a character string naming the variable to be used as response (e.g. "height")
 	(in which case the names of the predictors must be passed through the xr argument)
+	Alternatively, a custom list of (fitted) model objects can also be passed (can be convenient for small candidate sets).
 	
   }
   \item{xr}{An optional character array specifying the variables (categorical or quantitative) to be used as predictors, e.g. c("age", "height" , "mass")}

@@ -126,6 +126,11 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 	}
 	}
 	# construct list of coefficients
+	if (length(coffee)==1) {
+		# only one model ! Do conditional inference for continuity
+		warning("Only one candidate: standard conditional inference was performed.")
+		return(coef(coffee[[1]]))
+	}
 	coke=lapply(coffee,getfit)
 	namou=unique(unlist(lapply(coffee,function(x) dimnames(getfit(x))[[1]])))
 	# this equates synonymous notations (e.g. x:y and y:x)
@@ -144,7 +149,6 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 		if (length(pieces)>1) pieces[2]
 		else x
 		})
-
 	coconutM=matrix(0,length(formo),length(namou))
 	coconutSE=matrix(0,length(formo),length(namou))
 	coconutN = numeric(length(namou))
@@ -157,26 +161,22 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 	}
 	gettou=function(i) {
 		ele=coke[[i]]
-		nana = dimnames(ele)[[1]]
+		nana = dimnames(ele)				
+		if (length(nana)==2) nana=nana[[1]]
 		mimi=numeric(4*length(namou))
-		if (length(nana) >1) {
+		if (length(nana) > 0) {
 			for (k in 1:(length(nana))) {
 				mimi[matchou(nana[k])]=ele[k,1]
 				mimi[matchou(nana[k])+length(namou)]=ele[k,2]
 				mimi[matchou(nana[k])+2*length(namou)]=1
 				mimi[matchou(nana[k])+3*length(namou)]=ele[k,3]
 			}
-		} else {
-			mimi[match("(Intercept)",namou)]=ele[1]
-			mimi[match("(Intercept)",namou)+length(namou)]=ele[2]
-			mimi[match("(Intercept)",namou)+2*length(namou)]=1
-			mimi[match("(Intercept)",namou)+3*length(namou)]=ele[3]
-		}
-
+		} 
 		return(mimi)
 	}
 	lol=sapply(lapply(1:length(coke),gettou),rbind)
 	
+
 	coconutM = matrix(unlist(t(lol[1:length(namou),])),nr=length(whom))
 	coconutSE = matrix(unlist(t(lol[(1:length(namou))+length(namou),])),nr=length(whom))
 	# NA are set to zero
@@ -230,6 +230,9 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 
 	averaging = cbind(averest, avervar, nene, weighty, uncondIC)
 	ordonat = order(weighty[,1])
+	# remove null component if necessary
+	which(namou=="NULLOS")-> nooz
+	if (length(nooz)>0) ordonat=setdiff(ordonat,nooz)
 	averaging[ordonat,]
 }
 
@@ -277,6 +280,11 @@ predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, varw
 	}
 	}
 	
+	if (length(coffee)==1) {
+		# only one model ! Do conditional inference for continuity
+		warning("Only one candidate: standard conditional prediction was performed.")
+		return(predict(coffee[[1]],se.fit=se.fit,...))
+	}
 	
 	waou=ww[whom]/sum(ww[whom])
 	# make predictions
@@ -362,6 +370,7 @@ predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, varw
 
 
 
+
 #  S4 function definitions
 		
 # write redefinition
@@ -389,7 +398,13 @@ setGeneric("getfit", function(object, ...) standardGeneric("getfit"))
 setMethod("getfit","ANY", function(object, ...)
 {
 	summ = summary(object)
-	summ1 = summ$coefficients[,1:2]
+	summ1 = summ$coefficients
+	didi=dimnames(summ1)
+	if (is.null(didi[[1]])) {
+			summ1 = matrix(rep(0,2), nr=1, nc=2, dimnames=list(c("NULLOS"),list("Estimate","Std. Error")))
+			return(cbind(summ1, data.frame(df=c(0))))
+	}
+	summ1=summ1[,1:2]
 	if (length(dim(summ1))==0) {
 		didi = dimnames(summ$coefficients)
 		summ1=matrix(summ1, nr=1, nc=2, dimnames=list(didi[[1]],didi[[2]][1:2]))
@@ -460,6 +475,31 @@ setMethod("consensus", signature(xs="list"), function (xs, confsetsize, ...)
 	neo@params = lespaul[[1]]@params
 	return (neo)
 	})
+
+# support for coxph
+logLik.coxph <- function(object,...) {
+    y <-  object$loglik[length(object$loglik)]
+    class(y) <- "logLik"
+    attr(y,'df') <- if(is.null(object$coef)) 0 else sum(!is.na(object$coef))
+    return(y)
+}
+
+setMethod("getfit",signature(object="coxph"), function(object, ...)
+{
+	summ = summary(object)
+	summ1 = summ$coefficients[,c(1,3)]
+	if (length(dim(summ1))==0) {
+		didi = dimnames(summ$coefficients)
+		summ1=matrix(summ1, nr=1, nc=2, dimnames=list(didi[[1]],didi[[2]][c(1,3)]))
+	}
+	df = object$n-attr(logLik(object),"df")
+	return(cbind(summ1, data.frame(df=rep(df, length(summ$coefficients[,1])))))
+})
+
+setMethod("getfit",signature(object="coxph.null"), function(object, ...)
+{
+	return(NULL)
+})
 
 
 
@@ -546,7 +586,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
 		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects,  ...) 
 {
-	write("This is glmulti 1.0.1, april 2011.",file="")
+	write("This is glmulti 1.0.2, July 2011.",file="")
 })
 
 setMethod("glmulti",
@@ -639,6 +679,68 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 		names(call)[length(names(call))] = "data"
 	}
 	eval(call)
+})
+
+# convenience function : pass a list of fitted models
+setMethod("glmulti", signature(y="list"),
+function(y, xr, data, exclude, name, intercept, marginality ,bunch, chunk, chunks, 
+		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
+		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile,includeobjects, ...) 
+{
+	# go for exhaustive screening 
+	if (report) write("TASK: Exhaustive screening of candidate models.",file="")
+	# init output object
+	resulto <- new("glmulti")
+	if (chunks>1) {
+		resulto@name = paste(name,"_",chunk,".",chunks,sep="")
+	} else 
+		resulto@name = name
+	resulto@params = list(name=name, intercept=intercept, marginality=marginality ,bunch=bunch, chunk=chunk, chunks=chunks, 
+			level=level, minsize=minsize, maxsize=maxsize, minK=minK, maxK=maxK, method="h",crit=crit, confsetsize=confsetsize, fitfunction=fitfunction)
+	resulto@call=match.call()
+	resulto@adi=list(...)
+
+	if (report) write("Evaluating models...",file="")
+	flush.console()
+	nbmodels = length(y)
+	confsetsize=nbmodels
+	lesCrit<-numeric(confsetsize)
+	lesK<-vector('integer',confsetsize)
+	lesForms<-vector('character',confsetsize)
+	
+	# functions for support and fit
+	support = match.fun(crit)
+	if (is.function(crit))
+		crit = deparse(substitute(crit))
+	fitfunc = match.fun(fitfunction)
+	if (is.function(fitfunction)) 
+  		fitfunction <- deparse(substitute(fitfunction))
+	
+	# proceed with model evaluation
+	modeval=function(momo) {
+			cricriT<-support(y[[momo]])
+			lesFormsT=as.character(as.expression(terms(formula(y[[momo]]))))
+			lesKT=attr(logLik(y[[momo]]),"df")
+			list(cricriT,lesFormsT,lesKT)
+	}
+	sel=nbmodels
+	lapply(1:nbmodels, modeval)-> temporat
+	lesCrit=sapply(temporat, function(x) x[[1]])
+	lesForms=sapply(temporat, function(x) x[[2]])
+	lesK=sapply(temporat, function(x) x[[3]])
+	
+	
+	# over !
+	if (report) write("Completed.",file="")
+	# prepare and return glmulti object
+	reglo <- order(lesCrit[1:sel])
+	resulto@crits = lesCrit[1:sel][reglo]
+	resulto@formulas = lapply(lesForms[1:sel][reglo], as.formula)
+	resulto@K = as.integer(lesK[1:sel][reglo])
+	resulto@nbmods = as.integer(sel)
+	if (includeobjects) resulto@objects = y else resulto@objects = list()
+	return(resulto)
+
 })
 
 

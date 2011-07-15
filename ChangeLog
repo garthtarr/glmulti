@@ -54,5 +54,10 @@ Fixed: tendency to underestimate the unconditional variance of poorly suported e
 Fixed: problem in coef() when passing additional arguments to the fitting function.
 Added: possibility to choose the mode of variance weighting in predict(), just like in coef().
 
+Version: 1.0.2 (2011-07-15)
+Added: Support for Cox prop hazards regression (coxph in package survival)
+Added: Possibility to call glmulti on a list of fitted model objects, for flexibility and/or small candidate sets
+Fixed: Behavior of coef and predict for some pathological cases: only one candidate model (well...), and handling of models with no estimated coefficient at all
+
 
 
