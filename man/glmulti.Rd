@@ -13,7 +13,7 @@ The output can be used for model selection, variable selection, and multimodel i
 \usage{
 #  glmulti S4 generic 
 glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE, marginality = FALSE, bunch=30, chunk = 1, chunks = 1,
-		level = 2, minsize = 0, maxsize = -1, minK = 0, maxK = -1, method = "h", crit = "aicc", confsetsize = 100, popsize = 100, mutrate = 10^-3, sexrate = 0.1, imm = 0.3, plotty = TRUE, report = TRUE, deltaM = 0.05, deltaB = 0.05, conseq = 5, fitfunction = "glm", resumefile = "id", includeobjects=TRUE, ...)
+		level = 2, minsize = 0, maxsize = -1, minK = 0, maxK = -1, method = "h", crit = "aic", confsetsize = 100, popsize = 100, mutrate = 10^-3, sexrate = 0.1, imm = 0.3, plotty = TRUE, report = TRUE, deltaM = 0.05, deltaB = 0.05, conseq = 5, fitfunction = "glm", resumefile = "id", includeobjects=TRUE, ...)
 
 
 }
@@ -45,8 +45,8 @@ glmulti(y, xr, data, exclude = c(), name = "glmulti.analysis", intercept = TRUE,
     
   \item{method}{ The method to be used to explore the candidate set of models. If "h" an exhaustive screening is undertaken. If "g" the genetic algorithm is employed (recommended for large candidate sets).
 			If "l", a very fast exhaustive branch-and-bound algorithm is used. Package leaps must then be loaded, and this can only be applied to linear models with covariates and no interactions.  If "d", a simple summary of the candidate set is printed, including the number of candidate models.}
-  \item{crit}{The Information Criterion to be used. This should be a function that accepts a fitted model as first argument. Default is the small-sampled corrected Akaike IC (aicc).
-	Other provided functions are the Bayes IC (\code{bic}), the original AIC (\code{aic}) and QAIC/QAICc (\code{qaic} and \code{qaicc}).}
+  \item{crit}{The Information Criterion to be used. This should be a function that accepts a fitted model as first argument. Default is the original Akaike IC (aic).
+	Other provided functions are the Bayes IC (\code{bic}), the small-sample corrected AIC (\code{aicc}) and QAIC/QAICc (\code{qaic} and \code{qaicc}).}
   \item{fitfunction}{ The fitting function to be used. Any function similar to \code{glm} can be used. See Examples}
   \item{confsetsize}{ The number of models to be looked for, i.e. the size of the returned confidence set. }
 	
@@ -101,61 +101,33 @@ Calcagno \& de Mazancourt 2010 J. Stat. Soft. v34 i12. See http://www.jstatsoft.
 \seealso{ \code{\link{consensus}}, \code{\link{aic}}, \code{\link{weightable}}, \code{\link{summary.glmulti}}, \code{\link{coef.glmulti}}, \code{\link{step}}}
 
 \examples{
-# A. This shows how to use a custom fitting function, taking the example of mixed models and lmer
-# we load the lme4 package
-library(lme4)
-# some random data
-vy = 1:100
-va = runif(100)
-vb = runif(100)
-vc = factor(round(runif(100))) 
-# assume we want to use a random effect to control for the factor vc
-# There are three small steps to take:
-# 1. we first define a wrapper to lmer
-lmer.glmulti <- function (formula, data, random = "", ...) {
-	lmer(paste(deparse(formula), random), data = data, REML=FALSE, ...)
-}
-# the fixed-effects are passed as formula, and the random effects are passed as "random"
-# Here we could redefine the getfit function, but this is necessary only to use coef() or predict().
-# 3.Last, we must provide the corresponding aicc method, since the default will not work with mer objects
-setMethod('aicc', 'mer', function(object, ...) {
-	liliac<- logLik(object)
-	k<-attr(liliac,"df")
-	n= object@dims['n']
-	return(-2*as.numeric(liliac[1]) + 2*k*n/max(n-k-1,0))
-})
-# we are now ready to go:
-glmulti(vy~va*vb,level=2,fitfunc=lmer.glmulti,random="+(1|vc)")-> bab
-plot(bab)
-summary(bab)
-weightable(bab)
-
-# fixed-effects are shuffled and the random part is constant
-
-
-# B. This shows how to do the same for zero-inflated poisson models
+# See the document "glmulti.pdf" included in the package.
+# It explains the general approach and shows how to use glmulti with mixed models from the lme4 package.
+# Other examples:
+# A. This shows how to do the same for zero-inflated poisson models
 # we load the required package
 library(pscl)
 # a random vector of count data
 round(runif(100, 0,20)*round(runif(100)))-> vy2
+# dummy predictors
+va = runif(100)
+vb = runif(100)
 # 1. The wrapper function
 zeroinfl.glmulti=function(formula, data, inflate = "|1",...)  {
     zeroinfl(as.formula(paste(deparse(formula), inflate)),data=data,...)
 } 
-# 2 and 3. Unlike before, the default getfit and aicc method will work for zeroinfl objects, so no need to redefine them!
+# The default getfit and aicc method will work for zeroinfl objects, so no need to redefine them
 # we can proceed directly
 glmulti(vy2~va*vb,fitfunc=zeroinfl.glmulti,inflate="|1")->bab
 
 
-
-
-# C. This shows how to include some terms in ALL the models
+# B. This shows how to include some terms in ALL the models
 # As above, we just prepare a wrapper of the fitting function
 glm.redefined = function(formula, data, always="", ...) {
 glm(as.formula(paste(deparse(formula), always)), data=data, ...)
 }
 # we then use this fitting function in glmulti
-glmulti(vy~va,level=1,fitfunc=glm.redefined,always="+vb")-> bab
+glmulti(vy2~va,level=1,fitfunc=glm.redefined,always="+vb")-> bab
 # va will be shuffled but vb is always included in the models
 
 # this procedure allows support of arbitrarily any fitting function, or the use of sophisticated constraints on the model structure

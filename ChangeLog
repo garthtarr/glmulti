@@ -59,5 +59,11 @@ Added: Support for Cox prop hazards regression (coxph in package survival)
 Added: Possibility to call glmulti on a list of fitted model objects, for flexibility and/or small candidate sets
 Fixed: Behavior of coef and predict for some pathological cases: only one candidate model (well...), and handling of models with no estimated coefficient at all
 
+Version: 1.0.3 (2011-11-01)
+Restored: method "s" in plot.glmulti (for quick visualization of variable importances)
+Added: Doc glmulti.pdf presenting the general functioning of glmulti, with the example of supporting lmer objects
+(Thanks to Jurgis Sapijanskas)
+Changed: aic is now the default criterion used, rather than aicc.
+
 
 

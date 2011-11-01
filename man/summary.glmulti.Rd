@@ -26,7 +26,7 @@ plot.glmulti(x, type="p", ...)
 	\item{object}{ A \code{glmulti} object}
 	\item{x}{An object of class \code{glmulti}}
 	
-  	\item{type}{The type of graph to be produced. One of "p", "r" or "w" (see below).}
+  	\item{type}{The type of graph to be produced. One of "p", "r", "s" or "w" (see below).}
 		
 	\item{\dots}{ Further arguments.}
 }
@@ -43,6 +43,9 @@ plot.glmulti(x, type="p", ...)
 models that are less than 2 IC units away from the best model.
 
 \code{type="r"} shows diagnostics of the fit (residuals versus predicted values, and QQ plot of residuals) for the five best models. It calls the \code{plot} functions on the fitted model objects, which should be defined (e.g. \code{plot.lm}, \code{plot.glm}). This type of plot can only be used if model objects are included in the \code{glmulti} object (i.e. if \code{includeobjects} was set to true).
+
+\code{type="s"} plots the relative importance of model terms, i.e. the overall support for each variable across all models.
+A vertical line is drawn at 80%, which is a useful landmark.
 
 \code{type="w"} plots the normalized evidence weights of the models. A vertical line delineates models that sum um to 95% of the total weight of evidence.
 

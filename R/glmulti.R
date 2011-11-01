@@ -75,9 +75,28 @@ plot.glmulti<-function(x, type="p", ...)
 			plot(x@objects[[k]],which=c(1), main=deparse(x@formulas[[k]]),...)
 		for (k in 1:min(length(x@crits), 5)) 
 			plot(x@objects[[k]],which=c(2),...)
-	
-		} else warning("Unavailable: use includeobjects=T when calling glmulti.")
-			
+		} else warning("Unavailable: use includeobjects=T when calling glmulti.")		
+	} else if (type=="s") {
+		# plots variable (i.e. terms) importances
+		ww = exp(-(x@crits - x@crits[1])/2)
+		ww=ww/sum(ww)
+		# handle synonymies for interactions
+		# this translates to unique notations (e.g. x:y and y:x are the same)
+		clartou=function(x) {
+			sort(strsplit(x, ":")[[1]])-> pieces
+			if (length(pieces)>1) paste(pieces[1],":",pieces[2],sep="")
+			else x
+			}
+		# list terms in models
+		tet = lapply(x@formulas, function(x) sapply(attr(delete.response(terms(x)),"term.labels"), clartou))
+		# all unique terms
+		unique(unlist(tet))-> allt
+		# importances
+		sapply(allt, function(x) sum(ww[sapply(tet, function(t) x%in%t)]))-> imp
+		# draw
+		par(oma=c(0,3,0,0))
+		barplot(sort(imp),xlab="",xlim=c(0,1), ylab="",horiz=T,las=2, names.arg=allt[order(imp)],main="Model-averaged importance of terms", ...)
+		abline(v=0.8, col="red")
 	} else	warning("plot: Invalid type argument for plotting glmulti objects.")
 }
 
@@ -103,7 +122,7 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 				else 
 					whom = which(object@crits <= (object@crits[1]+select))
 		}
-
+	print("ok1")
 	mods = object@crits[whom]
 	formo = object@formulas[whom]
 	hasobj = try(object@objects,TRUE)
@@ -125,6 +144,8 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 		coffee=c(coffee,list(modf))
 	}
 	}
+		print("ok2")
+
 	# construct list of coefficients
 	if (length(coffee)==1) {
 		# only one model ! Do conditional inference for continuity
@@ -132,6 +153,8 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 		return(coef(coffee[[1]]))
 	}
 	coke=lapply(coffee,getfit)
+   
+	print("ok2a")
 	namou=unique(unlist(lapply(coffee,function(x) dimnames(getfit(x))[[1]])))
 	# this equates synonymous notations (e.g. x:y and y:x)
 	unique(sapply(namou, function(x) {
@@ -149,6 +172,7 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 		if (length(pieces)>1) pieces[2]
 		else x
 		})
+		
 	coconutM=matrix(0,length(formo),length(namou))
 	coconutSE=matrix(0,length(formo),length(namou))
 	coconutN = numeric(length(namou))
@@ -159,9 +183,12 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 			match(quiqui,namou2)
 		} else w1
 	}
+	print("ok2b")
 	gettou=function(i) {
 		ele=coke[[i]]
-		nana = dimnames(ele)				
+		print("r")
+		nana = dimnames(ele)
+		print(nana)			
 		if (length(nana)==2) nana=nana[[1]]
 		mimi=numeric(4*length(namou))
 		if (length(nana) > 0) {
@@ -176,6 +203,7 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 	}
 	lol=sapply(lapply(1:length(coke),gettou),rbind)
 	
+	print("ok3")
 
 	coconutM = matrix(unlist(t(lol[1:length(namou),])),nr=length(whom))
 	coconutSE = matrix(unlist(t(lol[(1:length(namou))+length(namou),])),nr=length(whom))
@@ -573,10 +601,9 @@ setMethod("weightable", "glmulti",  function(object, ...)
 
 # generic glmulti function
 setGeneric("glmulti", function(y, xr, data, exclude=c(), name="glmulti.analysis", intercept=TRUE, marginality=FALSE , bunch = 30, chunk=1, chunks=1, 
-		level=2, minsize=0, maxsize=-1, minK=0, maxK=-1, method="h",crit="aicc",confsetsize=100,popsize=100,mutrate=10^-3,
+		level=2, minsize=0, maxsize=-1, minK=0, maxK=-1, method="h",crit="aic",confsetsize=100,popsize=100,mutrate=10^-3,
 		sexrate=0.1,imm=0.3, plotty=TRUE, report=TRUE, deltaM=0.05, deltaB=0.05, conseq=5, fitfunction="glm", resumefile = "id", includeobjects=TRUE,  ...) 
 		standardGeneric("glmulti"))
-
 
 
 	
@@ -586,7 +613,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
 		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects,  ...) 
 {
-	write("This is glmulti 1.0.2, July 2011.",file="")
+	write("This is glmulti 1.0.3, Nov 2011.",file="")
 })
 
 setMethod("glmulti",
