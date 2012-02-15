@@ -9,10 +9,10 @@ from the models in the confidence set (or a subset of them). They are equivalent
 }
 \usage{
 # S3 coef method for class 'glmulti'
-coef.glmulti(object, select="all", varweighting="Buckland", icmethod="Lukacs", alphaIC=0.05,  ...)
+\method{coef}{glmulti}(object, select="all", varweighting="Buckland", icmethod="Lukacs", alphaIC=0.05,  ...)
 
 # S3 predict method for class 'glmulti'
-predict.glmulti(object, select="all", newdata=NA, se.fit=FALSE, 
+\method{predict}{glmulti}(object, select="all", newdata=NA, se.fit=FALSE, 
 	varweighting="Buckland", icmethod="Lukacs", alphaIC=0.05,  ...)
 }
 %- maybe also 'usage' for other objects documented here.

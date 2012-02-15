@@ -10,14 +10,14 @@ or produce different types of graphics.
 }
 \usage{
 # S3 summary method for class 'glmulti'
-summary.glmulti(object, ...)
+\method{summary}{glmulti}(object, ...)
 
 # S3 print method for class 'glmulti'
-print.glmulti(x, ...)
+\method{print}{glmulti}(x, ...)
 
 
 # S3 plot method for class 'glmulti'
-plot.glmulti(x, type="p", ...)
+\method{plot}{glmulti}(x, type="p", ...)
 
 
 }

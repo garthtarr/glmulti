@@ -122,7 +122,6 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 				else 
 					whom = which(object@crits <= (object@crits[1]+select))
 		}
-	print("ok1")
 	mods = object@crits[whom]
 	formo = object@formulas[whom]
 	hasobj = try(object@objects,TRUE)
@@ -144,7 +143,6 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 		coffee=c(coffee,list(modf))
 	}
 	}
-		print("ok2")
 
 	# construct list of coefficients
 	if (length(coffee)==1) {
@@ -153,9 +151,7 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 		return(coef(coffee[[1]]))
 	}
 	coke=lapply(coffee,getfit)
-   
-	print("ok2a")
-	namou=unique(unlist(lapply(coffee,function(x) dimnames(getfit(x))[[1]])))
+   	namou=unique(unlist(lapply(coffee,function(x) dimnames(getfit(x))[[1]])))
 	# this equates synonymous notations (e.g. x:y and y:x)
 	unique(sapply(namou, function(x) {
 		sort(strsplit(x, ":")[[1]])-> pieces
@@ -183,12 +179,9 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 			match(quiqui,namou2)
 		} else w1
 	}
-	print("ok2b")
 	gettou=function(i) {
 		ele=coke[[i]]
-		print("r")
-		nana = dimnames(ele)
-		print(nana)			
+		nana = dimnames(ele)			
 		if (length(nana)==2) nana=nana[[1]]
 		mimi=numeric(4*length(namou))
 		if (length(nana) > 0) {
@@ -203,20 +196,18 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 	}
 	lol=sapply(lapply(1:length(coke),gettou),rbind)
 	
-	print("ok3")
 
-	coconutM = matrix(unlist(t(lol[1:length(namou),])),nr=length(whom))
-	coconutSE = matrix(unlist(t(lol[(1:length(namou))+length(namou),])),nr=length(whom))
+	coconutM = matrix(unlist(t(lol[1:length(namou),])),nrow=length(whom))
+	coconutSE = matrix(unlist(t(lol[(1:length(namou))+length(namou),])),nrow=length(whom))
 	# NA are set to zero
 	coconutM[is.na(coconutM)]=0
-	coconutM[is.na(coconutSE)]=0
-	coconutN =  matrix(unlist(t(lol[(1:length(namou))+2*length(namou),])),nr=length(whom))
+	coconutN =  matrix(unlist(t(lol[(1:length(namou))+2*length(namou),])),nrow=length(whom))
 	
 	# handle degrees of freedom
-	coconutDF = matrix(unlist(t(lol[(1:length(namou))+3*length(namou),])),nr=length(whom))
+	coconutDF = matrix(unlist(t(lol[(1:length(namou))+3*length(namou),])),nrow=length(whom))
 	modelsdf= unlist(apply(coconutDF,1,max))
 	
-	nene = matrix(rep(1,length(whom))%*%coconutN, nc=1, dimnames=list( namou, c("Nb models")))
+	nene = matrix(rep(1,length(whom))%*%coconutN, ncol=1, dimnames=list( namou, c("Nb models")))
 	# construct weight vectors
 	waou=ww[whom]/sum(ww[whom])
 	waouv=waou
@@ -224,36 +215,36 @@ coef.glmulti <- function(object, select="all", varweighting="Buckland", icmethod
 	waouv= t(waouv)*coconutN
 	totwaou = waou%*%coconutN
 	# weight estimates
-	averest = matrix((rep(1,length(whom))%*%(waouv*coconutM)), nc=1, dimnames=list( namou, c("Estimate")))
-	weighty =  matrix(totwaou, nc=1, dimnames=list( namou, c("Importance")))
+	averest = matrix((rep(1,length(whom))%*%(waouv*coconutM)), ncol=1, dimnames=list( namou, c("Estimate")))
+	weighty =  matrix(totwaou, ncol=1, dimnames=list( namou, c("Importance")))
 	# weight variances
 	if (varweighting=="Johnson") {
 		squaredevs = waou%*%(((coconutM-t(matrix(rep(averest,length(whom)), length(namou), length(whom))))^2))
 		condivars =  waou%*%((coconutSE^2))
-		avervar = matrix(condivars+squaredevs, nc=1, dimnames=list( namou, c("Uncond. variance")))
+		avervar = matrix(condivars+squaredevs, ncol=1, dimnames=list( namou, c("Uncond. variance")))
 	} else if (varweighting=="Buckland") {
 		squaredevs = ((coconutM-t(matrix(rep(averest,length(whom)), length(namou), length(whom)))))^2
 		condivars = coconutSE^2
-		avervar = matrix(((waou)%*%(sqrt(squaredevs+condivars)))^2, nc=1, dimnames=list( namou, c("Uncond. variance")))
+		avervar = matrix(((waou)%*%(sqrt(squaredevs+condivars)))^2, ncol=1, dimnames=list( namou, c("Uncond. variance")))
 	} else 
-		avervar = matrix(rep(NA,length(namou)), nc=1, dimnames=list( namou, c("Uncond. variance")))
+		avervar = matrix(rep(NA,length(namou)), ncol=1, dimnames=list( namou, c("Uncond. variance")))
 
 	# now move on to confidence intervals
 	if (icmethod=="Burnham") {
 		# uses Burnham & Anderson (2002) suggestion
 		stuvals = (as.numeric(lapply(modelsdf,  function(x) qt(1-alphaIC/2, x)))/qnorm(1-alphaIC/2))^2
-		adjsem= (matrix(rep(stuvals, length(namou)), nr=length(whom)))*coconutSE^2
-		adjsem = adjsem + (coconutM-t(matrix(rep(averest, length(whom)), nc=length(whom))))^2
+		adjsem= (matrix(rep(stuvals, length(namou)), nrow=length(whom)))*coconutSE^2
+		adjsem = adjsem + (coconutM-t(matrix(rep(averest, length(whom)), ncol=length(whom))))^2
 		adjse = qnorm(1-alphaIC/2)*(waou%*%sqrt(adjsem))
-		uncondIC = matrix(adjse, nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+		uncondIC = matrix(adjse, ncol=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 	} else if (icmethod=="Lukacs") {
 		# uses Lukacs et al. (2008) student-like method
 		# get degrees of freedom for each model
 		averddf = sum(waou*modelsdf)
-		uncondIC = matrix(sqrt(avervar)*qt(1-alphaIC/2,averddf), nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+		uncondIC = matrix(sqrt(avervar)*qt(1-alphaIC/2,averddf), ncol=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 	} else {
 		# uses standard gaussian interval 
-		uncondIC = matrix(sqrt(avervar)*qnorm(1-alphaIC/2), nc=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+		uncondIC = matrix(sqrt(avervar)*qnorm(1-alphaIC/2), ncol=1,  dimnames=list(namou, c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 	}
 
 	averaging = cbind(averest, avervar, nene, weighty, uncondIC)
@@ -331,7 +322,7 @@ predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, varw
 	preds=lapply(predicts,function(x) x[[1]])
 	}  else preds = predicts
 	nbpo = length(preds[[1]])
-	all = t(matrix(unlist(preds), nr=nbpo))
+	all = t(matrix(unlist(preds), nrow=nbpo))
 	dimnames(all)=list(c(), names(preds[[1]]) )
 	# handle NA values
 	nana = lapply(preds, is.na)
@@ -340,16 +331,16 @@ predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, varw
 		nbok = nbok + nana[[i]]
 		preds[[i]][is.na(preds[[i]])] = 0
 		}
-	minou = matrix(waou%*%t(matrix(unlist(preds),nr=nbpo)), dimnames=list(names(preds[[1]]),c() )) 
+	minou = matrix(waou%*%t(matrix(unlist(preds),nrow=nbpo)), dimnames=list(names(preds[[1]]),c() )) 
 	
 	# handle variances if appropriate
 	mvar=NULL
 	if (se.fit) {
 		waouv=waou
 		if (nbpo>1) for (i in 2:nbpo) waouv=rbind(waouv,waou) 
-		waouv= matrix(t(waouv),nr=length(whom),nc=nbpo)
+		waouv= matrix(t(waouv),nrow=length(whom),ncol=nbpo)
 		predse=lapply(predicts,function(x) x[[2]])
-		allse = t(matrix(unlist(predse), nr=nbpo))
+		allse = t(matrix(unlist(predse), nrow=nbpo))
 		dimnames(allse)=list(c(), names(predse[[1]]) )
 		# handle NA values
 		nana = lapply(predse, is.na)
@@ -365,28 +356,28 @@ predict.glmulti <- function(object, select="all", newdata=NA, se.fit=FALSE, varw
 			if (varweighting=="Buckland") {
 			squaredevs = ((all-t(matrix(rep(minou,length(whom)), nbpo, length(whom)))))^2
 			condivars = allse^2
-			avervar = matrix(((waou)%*%(sqrt(squaredevs+condivars)))^2, nc=1, dimnames=list( names(predse[[1]]), c("Uncond. variance")))
+			avervar = matrix(((waou)%*%(sqrt(squaredevs+condivars)))^2, ncol=1, dimnames=list( names(predse[[1]]), c("Uncond. variance")))
 		} else if (varweighting=="Johnson") {
 			squaredevs = waou%*%(((all-t(matrix(rep(minou,length(whom)), nbpo, length(whom))))^2))
 			condivars =  waou%*%((allse^2))
-			avervar = matrix(condivars+squaredevs, nc=1, dimnames=list(  names(predse[[1]]), c("Uncond. variance")))
+			avervar = matrix(condivars+squaredevs, ncol=1, dimnames=list(  names(predse[[1]]), c("Uncond. variance")))
 		}	
 		# move on to confidence intervals
 		if (icmethod=="Burnham") {
 			# uses Burnham & Anderson (2002) suggestion
 			stuvals = (as.numeric(lapply(modelsdf,  function(x) qt(1-alphaIC/2, x)))/qnorm(1-alphaIC/2))^2
-			adjsem= (matrix(rep(stuvals, nbpo), nr=length(whom)))*allse^2
-			adjsem = adjsem + (all-t(matrix(rep(minou, length(whom)), nc=length(whom))))^2
+			adjsem= (matrix(rep(stuvals, nbpo), nrow=length(whom)))*allse^2
+			adjsem = adjsem + (all-t(matrix(rep(minou, length(whom)), ncol=length(whom))))^2
 			adjse = qnorm(1-alphaIC/2)*(waou%*%sqrt(adjsem))
-			uncondIC = matrix(adjse, nc=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+			uncondIC = matrix(adjse, ncol=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 		} else if (icmethod=="Lukacs") {
 			# uses Lukacs et al. (2010) student-like method
 			# get degrees of freedom for each model
 			averddf = sum(waou*modelsdf)
-			uncondIC = matrix(sqrt(avervar)*qt(1-alphaIC/2,averddf), nc=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+			uncondIC = matrix(sqrt(avervar)*qt(1-alphaIC/2,averddf), ncol=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 		} else {
 			# uses standard gaussian interval 
-			uncondIC = matrix(sqrt(avervar)*qnorm(1-alphaIC/2), nc=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
+			uncondIC = matrix(sqrt(avervar)*qnorm(1-alphaIC/2), ncol=1,  dimnames=list( names(predse[[1]]), c(paste("+/- (alpha=", alphaIC, ")",sep=""))))
 		}
 		mvar = cbind(avervar, uncondIC)
 		
@@ -408,9 +399,9 @@ setMethod("write","glmulti", function(x, file , ncolumns, append, sep)
 		if (!missing(file)&&length(grep(file, "|object"))==1) {
 			ir = gsub("\\|object","",file)
 			if (ir=="")
-				.saveRDS(x, file=x@name)
+				saveRDS(x, file=x@name)
 			else 
-				.saveRDS(x, file=ir)
+				saveRDS(x, file=ir)
 		} else {
 			concato=cbind(data.frame(K=x@K),data.frame(IC=x@crits), data.frame(Models=as.character(x@formulas)))
 			if (missing(file))
@@ -429,13 +420,13 @@ setMethod("getfit","ANY", function(object, ...)
 	summ1 = summ$coefficients
 	didi=dimnames(summ1)
 	if (is.null(didi[[1]])) {
-			summ1 = matrix(rep(0,2), nr=1, nc=2, dimnames=list(c("NULLOS"),list("Estimate","Std. Error")))
+			summ1 = matrix(rep(0,2), nrow=1, nc=2, dimnames=list(c("NULLOS"),list("Estimate","Std. Error")))
 			return(cbind(summ1, data.frame(df=c(0))))
 	}
 	summ1=summ1[,1:2]
 	if (length(dim(summ1))==0) {
 		didi = dimnames(summ$coefficients)
-		summ1=matrix(summ1, nr=1, nc=2, dimnames=list(didi[[1]],didi[[2]][1:2]))
+		summ1=matrix(summ1, nrow=1, nc=2, dimnames=list(didi[[1]],didi[[2]][1:2]))
 	}
 	return(cbind(summ1, data.frame(df=rep(summ$df[2], length(summ$coefficients[,1])))))
 	
@@ -451,7 +442,7 @@ setMethod("consensus", signature(xs="list"), function (xs, confsetsize, ...)
 	if (class(i)=="glmulti")
 		lespaul=c(lespaul, i)
 	else if (class(i)=="character") {
-			paul = .readRDS(file=i)
+			paul = readRDS(file=i)
 			if (class(paul)=="glmulti")
 				lespaul=c(lespaul,paul)
 		}
@@ -518,7 +509,7 @@ setMethod("getfit",signature(object="coxph"), function(object, ...)
 	summ1 = summ$coefficients[,c(1,3)]
 	if (length(dim(summ1))==0) {
 		didi = dimnames(summ$coefficients)
-		summ1=matrix(summ1, nr=1, nc=2, dimnames=list(didi[[1]],didi[[2]][c(1,3)]))
+		summ1=matrix(summ1, nrow=1, nc=2, dimnames=list(didi[[1]],didi[[2]][c(1,3)]))
 	}
 	df = object$n-attr(logLik(object),"df")
 	return(cbind(summ1, data.frame(df=rep(df, length(summ$coefficients[,1])))))
@@ -543,7 +534,7 @@ setMethod("aicc", "ANY", function(object, ...)
 {
 	liliac<- logLik(object)
 	k<-attr(liliac,"df")
-	n= length(resid(object))
+	n= nobs(object)
 	return(-2*as.numeric(liliac[1]) + 2*k*n/max(n-k-1,0))
 })
 
@@ -551,7 +542,7 @@ setMethod("bic", signature(object="ANY"), function(object, ...)
 {
 	liliac<- logLik(object)
 	k<-attr(liliac,"df")
-	n= length(resid(object))
+	n= nobs(object)
 	return(-2*as.numeric(liliac[1]) + k*log(n))
 })
 
@@ -573,7 +564,7 @@ setMethod("qaicc", "ANY",  function(object, ...)
 {
 	liliac<- logLik(object)
 	k<-attr(liliac,"df")
-	n= length(resid(object))
+	n= nobs(object)
  	return(as.numeric(liliac[1]) / glmultiqaiccvalue + 2*k*n/max(n-k-1,0))
 
 })
@@ -613,7 +604,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
 		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects,  ...) 
 {
-	write("This is glmulti 1.0.3, Nov 2011.",file="")
+	write("This is glmulti 1.0.4, Feb 2012.",file="")
 })
 
 setMethod("glmulti",
@@ -1164,7 +1155,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 				consoude = consoude+1
 			else consoude = 0
 			if (consoude == conseq) {
-				write("Improvements in best and average IC have been below the specified goals.",file="")
+				write("Improvements in best and average IC have bebingo en below the specified goals.",file="")
 				write("Algorithm is declared to have converged.",file="")
 				gogo=FALSE
 			} else {
