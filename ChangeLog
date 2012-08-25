@@ -66,9 +66,15 @@ Added: Doc glmulti.pdf presenting the general functioning of glmulti, with the e
 Changed: aic is now the default criterion used, rather than aicc.
 
 Version: 1.0.4 (2012-02-15)
-NNote: glmulti now depends on R 2.13
+Note: glmulti now depends on R 2.13
 Changed: conforming to R 2.13. the generic function nobs is now used to get number of observations to compute information criteria (bic, aicc, qaicc)
 Changed: conforming to R 2.13. the public functions saveRDS and readRDS are now used rather than their hidden counterparts (function write and consensus)
 Fixed: some debugging messages were printed when running coef.glmulti
 Added: illustrations on how to use glmulti with functions clm (ordinal) and multinom (nnet), in glmulti.pdf
+
+Version 1.0.5/1.0.6 (2012-08-25)
+Fixed: function consensus() did not order model objects properly, when using includeobjects=T
+Fixed: slot "K" was sometimes not well aligned with models, ics and formulas
+
+
 

@@ -442,7 +442,7 @@ setMethod("consensus", signature(xs="list"), function (xs, confsetsize, ...)
 	if (class(i)=="glmulti")
 		lespaul=c(lespaul, i)
 	else if (class(i)=="character") {
-			paul = readRDS(file=i)
+			paul = .readRDS(file=i)
 			if (class(paul)=="glmulti")
 				lespaul=c(lespaul,paul)
 		}
@@ -457,9 +457,11 @@ setMethod("consensus", signature(xs="list"), function (xs, confsetsize, ...)
 	tota = tot[[1]]
 	for (h in 2: length(tot))
 		tota = rbind(tota, tot[[h]])
+	tobekept = !duplicated(tota$formulas)
+	rearrange = order(tota$IC[tobekept])
 	tot = tota
-	tot = tot[!duplicated(tot$formulas),]
-	tot = tot[order(tot$IC),]
+	tot = tot[tobekept,]
+	tot = tot[rearrange,]
 	
 	if (takeobjects) {
 	concab = function (x) {
@@ -470,8 +472,8 @@ setMethod("consensus", signature(xs="list"), function (xs, confsetsize, ...)
 	for (h in 2: length(tob))
 		toba = c(toba, tob[[h]])
 	tob=toba
-	tob = tob[!duplicated(tot$formulas)]
-	tob = tob[order(tot$IC)]
+	tob = tob[tobekept]
+	tob = tob[rearrange]
 	}
 	
 	if (is.na(confsetsize) || length(tot$K)<confsetsize) {
@@ -494,6 +496,7 @@ setMethod("consensus", signature(xs="list"), function (xs, confsetsize, ...)
 	neo@params = lespaul[[1]]@params
 	return (neo)
 	})
+
 
 # support for coxph
 logLik.coxph <- function(object,...) {
@@ -604,7 +607,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
 		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects,  ...) 
 {
-	write("This is glmulti 1.0.4, Feb 2012.",file="")
+	write("This is glmulti 1.0.6, Aug. 2012.",file="")
 })
 
 setMethod("glmulti",
@@ -1173,7 +1176,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 		reglo <- order(lesCrit)
 		resulto@crits = lesCrit[reglo]
 		resulto@formulas = lapply(lesForms[reglo],as.formula)
-		resulto@K = as.integer(lesKK)
+		resulto@K = as.integer(lesKK)[reglo]
 		resulto@nbmods = as.integer(sel)
 		# if objects are requested to be included, refit models
 		if (includeobjects) {

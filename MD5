@@ -1,9 +1,9 @@
-2d7ffc52fbfb8f7a4d61676cfa0f84d9 *ChangeLog
-c9e32b622e4e1a58bb373bbef26391e1 *DESCRIPTION
+180b4ba9af1b5125d745e58b460faa5b *ChangeLog
+da95e661da406768af812401bdaebb89 *DESCRIPTION
 4526c6e8881c74bb938628dd33555814 *NAMESPACE
-bc631d1a6a6e35268eed95d930eac6a9 *R/glmulti.r
+20d98c34d9c5b183194b7c58d5f55ef2 *R/glmulti.r
 0bb7f97b4d2e204ede4a3d6b042cd3d9 *R/onLoad.R
-934c33ddfea611fef5bb1a270580e081 *inst/doc/glmulti.pdf
+c2d395509bee3f702c46a3059289ab4b *inst/doc/glmulti.pdf
 82a98c96aa8b54d631f3ddb23372b4f5 *inst/java/MANIFEST.MF
 34d25703ee0dbae7018a8cda3d73217a *inst/java/glmulti/GLMModel.class
 a2ec99fa564e8011b6aa1d5c380cccb8 *inst/java/glmulti/ModelGenerator.class
