@@ -76,5 +76,8 @@ Version 1.0.5/1.0.6 (2012-08-25)
 Fixed: function consensus() did not order model objects properly, when using includeobjects=T
 Fixed: slot "K" was sometimes not well aligned with models, ics and formulas
 
+Version 1.0.7 (2013-04-10)
+Changed: the estimated c-hat value to be used with QAIC/QAICC is now to be passed through option "glmulti-cvalue" rather than through the global variable "glmultiqaiccvalue" as it is used to be.
+Fixed typo in qaic/qaicc (thanks to Marin Greenwood)
 
 

@@ -5,6 +5,8 @@
 \title{  Methods for Function qaicc }
 \description{
  Used to compute the QAICc value for several classes of models.
+ Specify the estimated c value to be used through the "glmulti-cvalue" option.
+
 }
 \section{Methods}{
 \describe{

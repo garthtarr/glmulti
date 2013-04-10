@@ -420,13 +420,13 @@ setMethod("getfit","ANY", function(object, ...)
 	summ1 = summ$coefficients
 	didi=dimnames(summ1)
 	if (is.null(didi[[1]])) {
-			summ1 = matrix(rep(0,2), nrow=1, nc=2, dimnames=list(c("NULLOS"),list("Estimate","Std. Error")))
+			summ1 = matrix(rep(0,2), nrow=1, ncol=2, dimnames=list(c("NULLOS"),list("Estimate","Std. Error")))
 			return(cbind(summ1, data.frame(df=c(0))))
 	}
 	summ1=summ1[,1:2]
 	if (length(dim(summ1))==0) {
 		didi = dimnames(summ$coefficients)
-		summ1=matrix(summ1, nrow=1, nc=2, dimnames=list(didi[[1]],didi[[2]][1:2]))
+		summ1=matrix(summ1, nrow=1, ncol=2, dimnames=list(didi[[1]],didi[[2]][1:2]))
 	}
 	return(cbind(summ1, data.frame(df=rep(summ$df[2], length(summ$coefficients[,1])))))
 	
@@ -512,7 +512,7 @@ setMethod("getfit",signature(object="coxph"), function(object, ...)
 	summ1 = summ$coefficients[,c(1,3)]
 	if (length(dim(summ1))==0) {
 		didi = dimnames(summ$coefficients)
-		summ1=matrix(summ1, nrow=1, nc=2, dimnames=list(didi[[1]],didi[[2]][c(1,3)]))
+		summ1=matrix(summ1, nrow=1, ncol=2, dimnames=list(didi[[1]],didi[[2]][c(1,3)]))
 	}
 	df = object$n-attr(logLik(object),"df")
 	return(cbind(summ1, data.frame(df=rep(df, length(summ$coefficients[,1])))))
@@ -559,7 +559,7 @@ setMethod("qaic", "ANY",  function(object, ...)
 {
 	liliac<- logLik(object)
 	k<-attr(liliac,"df")
- 	return(as.numeric(liliac[1]) / glmultiqaiccvalue + 2 * k)
+ 	return(-2*as.numeric(liliac[1]) / getOption("glmulti-cvalue") + 2 * k)
 
 })
 
@@ -568,7 +568,7 @@ setMethod("qaicc", "ANY",  function(object, ...)
 	liliac<- logLik(object)
 	k<-attr(liliac,"df")
 	n= nobs(object)
- 	return(as.numeric(liliac[1]) / glmultiqaiccvalue + 2*k*n/max(n-k-1,0))
+ 	return(-2*as.numeric(liliac[1]) / getOption("glmulti-cvalue") + 2*k*n/max(n-k-1,0))
 
 })
 
@@ -607,7 +607,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 		level, minsize, maxsize, minK, maxK, method,crit,confsetsize,popsize,mutrate,
 		sexrate,imm, plotty,  report, deltaM, deltaB, conseq, fitfunction, resumefile, includeobjects,  ...) 
 {
-	write("This is glmulti 1.0.6, Aug. 2012.",file="")
+	write("This is glmulti 1.0.7, Apr. 2013.",file="")
 })
 
 setMethod("glmulti",

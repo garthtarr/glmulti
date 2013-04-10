@@ -1,9 +1,9 @@
-180b4ba9af1b5125d745e58b460faa5b *ChangeLog
-da95e661da406768af812401bdaebb89 *DESCRIPTION
+9a09584aec883f791c76783117904ddc *ChangeLog
+84144b37984e11a0e6935e35c678438b *DESCRIPTION
 4526c6e8881c74bb938628dd33555814 *NAMESPACE
-20d98c34d9c5b183194b7c58d5f55ef2 *R/glmulti.r
+3d7b51e27d6fe4691991875e51e9dea3 *R/glmulti.r
 0bb7f97b4d2e204ede4a3d6b042cd3d9 *R/onLoad.R
-c2d395509bee3f702c46a3059289ab4b *inst/doc/glmulti.pdf
+8102ac316f2cd0578d775e6fec862096 *inst/doc/glmulti.pdf
 82a98c96aa8b54d631f3ddb23372b4f5 *inst/java/MANIFEST.MF
 34d25703ee0dbae7018a8cda3d73217a *inst/java/glmulti/GLMModel.class
 a2ec99fa564e8011b6aa1d5c380cccb8 *inst/java/glmulti/ModelGenerator.class
@@ -20,8 +20,8 @@ a8e9c421f8235478de011a105db68b52 *man/getfit-methods.Rd
 2a85efb772bd3c89f3141f091952a096 *man/glmulti-class.Rd
 9c61e970f20d93b5a53be4a9a400fd3f *man/glmulti-methods.Rd
 13f0c3bb49a94ca13a56f369ced3990c *man/glmulti.Rd
-d9768b4298ee8db94219eb7f5d32126c *man/qaic-methods.Rd
-dc242067ca186317462a748d2658cd7b *man/qaicc-methods.Rd
+39ab5862bb85088bbc15a5fab3a9040d *man/qaic-methods.Rd
+73cdf211de28e239f201dc6cfceb3f1e *man/qaicc-methods.Rd
 327e4aa0b30edd194d3742c61c0c958b *man/summary.glmulti.Rd
 e596eb817f0714fa02e845b15355faaa *man/weightable-methods.Rd
 4bba74a1f367335b25fe659a2a5aeb13 *man/weightable.Rd
