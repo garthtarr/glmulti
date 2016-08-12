@@ -945,7 +945,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 				lesForms[sel]=formula[momo]
 				lesCrit[sel]=cricri
 				lesK[sel]=attr(logLik(beber[[momo]]),"df")
-				lesObjects=c(lesObjects, list(beber[[momo]]))
+				if (includeobjects) lesObjects=c(lesObjects, list(beber[[momo]])) else lesObjects = list()
 			} else {
 				mini=max(lesCrit)
 				if (cricri<mini) {
@@ -953,7 +953,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 					lesForms[ou]=formula[momo]
 					lesCrit[ou]=cricri
 					lesK[ou]=attr(logLik(beber[[momo]]),"df")
-					lesObjects[[ou]] = beber[[momo]]
+					if (includeobjects) lesObjects[[ou]] = beber[[momo]]
 				}
 			}
 		}
