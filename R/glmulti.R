@@ -530,6 +530,7 @@ setMethod("getfit",signature(object="coxph.null"), function(object, ...)
 # information criteria
 setGeneric("aicc", function(object, ...) standardGeneric("aicc"))
 setGeneric("aic", function(object, ...) standardGeneric("aic"))
+setGeneric("ll", function(object, ...) standardGeneric("ll"))
 setGeneric("bic", function(object, ...) standardGeneric("bic"))
 setGeneric("qaic", function(object, ...) standardGeneric("qaic"))
 setGeneric("qaicc", function(object, ...) standardGeneric("qaicc"))
@@ -549,7 +550,15 @@ setMethod("bic", signature(object="ANY"), function(object, ...)
 	return(-2*as.numeric(liliac[1]) + k*log(n))
 })
 
-setMethod("aic", "ANY",  function(object, ...)
+setMethod("ll", signature(object="ANY"), function(object, ...)
+{
+  liliac<- logLik(object)
+  k<-attr(liliac,"df")
+  n= nobs(object)
+  return(as.numeric(liliac[1]))
+})
+
+setMethod("aic", signature(object="ANY"),  function(object, ...)
 {
 	liliac<- logLik(object)
 	k<-attr(liliac,"df")
