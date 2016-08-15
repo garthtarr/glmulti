@@ -514,7 +514,7 @@ setMethod("getfit",signature(object="coxph"), function(object, ...)
 		didi = dimnames(summ$coefficients)
 		summ1=matrix(summ1, nrow=1, ncol=2, dimnames=list(didi[[1]],didi[[2]][c(1,3)]))
 	}
-	df = object$n-attr(logLik(object),"df")
+	df = object$n-attr(stats::logLik(object),"df")
 	return(cbind(summ1, data.frame(df=rep(df, length(summ$coefficients[,1])))))
 })
 
@@ -536,7 +536,7 @@ setGeneric("qaic", function(object, ...) standardGeneric("qaic"))
 setGeneric("qaicc", function(object, ...) standardGeneric("qaicc"))
 setMethod("aicc", "ANY", function(object, ...)
 {
-	liliac<- logLik(object)
+	liliac<- stats::logLik(object)
 	k<-attr(liliac,"df")
 	n= nobs(object)
 	return(-2*as.numeric(liliac[1]) + 2*k*n/max(n-k-1,0))
@@ -544,7 +544,7 @@ setMethod("aicc", "ANY", function(object, ...)
 
 setMethod("bic", signature(object="ANY"), function(object, ...)
 {
-	liliac<- logLik(object)
+	liliac<- stats::logLik(object)
 	k<-attr(liliac,"df")
 	n= nobs(object)
 	return(-2*as.numeric(liliac[1]) + k*log(n))
@@ -552,7 +552,7 @@ setMethod("bic", signature(object="ANY"), function(object, ...)
 
 setMethod("ll", signature(object="ANY"), function(object, ...)
 {
-  liliac<- logLik(object)
+  liliac<- stats::logLik(object)
   k<-attr(liliac,"df")
   n= nobs(object)
   return(as.numeric(liliac[1]))
@@ -560,13 +560,13 @@ setMethod("ll", signature(object="ANY"), function(object, ...)
 
 setMethod("aic", signature(object="ANY"),  function(object, ...)
 {
-	liliac<- logLik(object)
+	liliac<- stats::logLik(object)
 	k<-attr(liliac,"df")
 	return(-2*as.numeric(liliac[1])+2*k)
 })
 setMethod("qaic", "ANY",  function(object, ...)
 {
-	liliac<- logLik(object)
+	liliac<- stats::logLik(object)
 	k<-attr(liliac,"df")
  	return(-2*as.numeric(liliac[1]) / getOption("glmulti-cvalue") + 2 * k)
 
@@ -574,7 +574,7 @@ setMethod("qaic", "ANY",  function(object, ...)
 
 setMethod("qaicc", "ANY",  function(object, ...)
 {
-	liliac<- logLik(object)
+	liliac<- stats::logLik(object)
 	k<-attr(liliac,"df")
 	n= nobs(object)
  	return(-2*as.numeric(liliac[1]) / getOption("glmulti-cvalue") + 2*k*n/max(n-k-1,0))
@@ -750,7 +750,7 @@ function(y, xr, data, exclude, name, intercept, marginality ,bunch, chunk, chunk
 	modeval=function(momo) {
 			cricriT<-support(y[[momo]])
 			lesFormsT=as.character(as.expression(terms(formula(y[[momo]]))))
-			lesKT=attr(logLik(y[[momo]]),"df")
+			lesKT=attr(stats::logLik(y[[momo]]),"df")
 			list(cricriT,lesFormsT,lesKT)
 	}
 	sel=nbmodels
@@ -864,7 +864,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 
 		# informs it about the number of df consumed by the error distrib
 		options(warn=-1)
-		.jcall(molly,"V","supplyErrorDF",as.integer(attr(logLik(fitfunc(as.formula(paste(y,"~1")),data=data, ...)),"df")-1))
+		.jcall(molly,"V","supplyErrorDF",as.integer(attr(stats::logLik(fitfunc(as.formula(paste(y,"~1")),data=data, ...)),"df")-1))
 		options(warn=0)
 	}
 
@@ -953,7 +953,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 				sel=sel+1
 				lesForms[sel]=formula[momo]
 				lesCrit[sel]=cricri
-				lesK[sel]=attr(logLik(beber[[momo]]),"df")
+				lesK[sel]=attr(stats::logLik(beber[[momo]]),"df")
 				if (includeobjects) lesObjects=c(lesObjects, list(beber[[momo]])) else lesObjects = list()
 			} else {
 				mini=max(lesCrit)
@@ -961,7 +961,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 					ou=which(lesCrit==mini)[1]
 					lesForms[ou]=formula[momo]
 					lesCrit[ou]=cricri
-					lesK[ou]=attr(logLik(beber[[momo]]),"df")
+					lesK[ou]=attr(stats::logLik(beber[[momo]]),"df")
 					if (includeobjects) lesObjects[[ou]] = beber[[momo]]
 				}
 			}
@@ -1132,7 +1132,7 @@ function(y, xr, data, exclude, name, intercept, marginality , bunch, chunk, chun
 						# fit models
 						formula=popul[m]
 						beber<- fitfunc(as.formula(formula), data=data, ...)
-						liliac<- logLik(beber)
+						liliac<- stats::logLik(beber)
 						K<-attr(liliac,"df")
 						# convergence ?
 						if (fitfunction=="glm" && !beber$converged) 
